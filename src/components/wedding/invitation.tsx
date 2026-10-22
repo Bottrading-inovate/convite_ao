@@ -187,14 +187,36 @@ export function WeddingInvitation({
   }
 
   function downloadQr() {
-    const svg = document.getElementById('guest-qr');
+    const svg = document.getElementById('guest-qr') as SVGSVGElement | null;
     if (!svg) return;
-    const url = URL.createObjectURL(new Blob([new XMLSerializer().serializeToString(svg)], { type: 'image/svg+xml' }));
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `convite-junior-e-hermenegilda-${guestName ? guestName.replace(/\s+/g, '-') : 'qr'}.svg`;
-    a.click();
-    URL.revokeObjectURL(url);
+
+    const svgData = new XMLSerializer().serializeToString(svg);
+    const svgBlob = new Blob([svgData], { type: 'image/svg+xml;charset=utf-8' });
+    const blobUrl = URL.createObjectURL(svgBlob);
+
+    const img = new Image();
+    img.onload = () => {
+      const canvas = document.createElement('canvas');
+      const size = 600;
+      canvas.width = size;
+      canvas.height = size;
+      const ctx = canvas.getContext('2d');
+      if (ctx) {
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(0, 0, size, size);
+        ctx.drawImage(img, 0, 0, size, size);
+        const pngUrl = canvas.toDataURL('image/png');
+        const a = document.createElement('a');
+        a.href = pngUrl;
+        const sanitized = guestName
+          ? guestName.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '')
+          : 'qr';
+        a.download = `passe-convite-junior-hermenegilda-${sanitized}.png`;
+        a.click();
+      }
+      URL.revokeObjectURL(blobUrl);
+    };
+    img.src = blobUrl;
   }
 
   return (
