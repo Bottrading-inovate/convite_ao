@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as PainelRouteImport } from './routes/painel'
 import { Route as ConviteTokenRouteImport } from './routes/convite.$token'
+import { Route as PasseTokenRouteImport } from './routes/passe.$token'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -28,35 +29,44 @@ const ConviteTokenRoute = ConviteTokenRouteImport.update({
   path: '/convite/$token',
   getParentRoute: () => rootRouteImport,
 } as any)
+const PasseTokenRoute = PasseTokenRouteImport.update({
+  id: '/passe/$token',
+  path: '/passe/$token',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/painel': typeof PainelRoute
   '/convite/$token': typeof ConviteTokenRoute
+  '/passe/$token': typeof PasseTokenRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/painel': typeof PainelRoute
   '/convite/$token': typeof ConviteTokenRoute
+  '/passe/$token': typeof PasseTokenRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/painel': typeof PainelRoute
   '/convite/$token': typeof ConviteTokenRoute
+  '/passe/$token': typeof PasseTokenRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/painel' | '/convite/$token'
+  fullPaths: '/' | '/painel' | '/convite/$token' | '/passe/$token'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/painel' | '/convite/$token'
-  id: '__root__' | '/' | '/painel' | '/convite/$token'
+  to: '/' | '/painel' | '/convite/$token' | '/passe/$token'
+  id: '__root__' | '/' | '/painel' | '/convite/$token' | '/passe/$token'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   PainelRoute: typeof PainelRoute
   ConviteTokenRoute: typeof ConviteTokenRoute
+  PasseTokenRoute: typeof PasseTokenRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -82,6 +92,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ConviteTokenRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/passe/$token': {
+      id: '/passe/$token'
+      path: '/passe/$token'
+      fullPath: '/passe/$token'
+      preLoaderRoute: typeof PasseTokenRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -89,6 +106,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   PainelRoute: PainelRoute,
   ConviteTokenRoute: ConviteTokenRoute,
+  PasseTokenRoute: PasseTokenRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

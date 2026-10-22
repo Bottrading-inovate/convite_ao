@@ -29,8 +29,10 @@ CREATE TABLE IF NOT EXISTS public.wedding_guests (
   message text,
   responded_at timestamptz,
   created_at timestamptz NOT NULL DEFAULT now(),
+  table_name text,
   CHECK (token ~ '^[a-f0-9]{12,64}$')
 );
+ALTER TABLE public.wedding_guests ADD COLUMN IF NOT EXISTS table_name text;
 
 -- 3. Índices
 CREATE INDEX IF NOT EXISTS idx_wedding_guests_active ON public.wedding_guests (active);
@@ -86,14 +88,15 @@ RETURNS TABLE(
   name text,
   attending boolean,
   party_size integer,
-  responded_at timestamptz
+  responded_at timestamptz,
+  table_name text
 )
 LANGUAGE sql
 STABLE
 SECURITY DEFINER
 SET search_path = public, extensions, pg_temp
 AS $$
-  SELECT g.name, g.attending, g.party_size, g.responded_at
+  SELECT g.name, g.attending, g.party_size, g.responded_at, g.table_name
   FROM public.wedding_guests g
   WHERE invitation_token ~ '^[a-f0-9]{12,64}$'
     AND g.token = invitation_token
@@ -334,10 +337,12 @@ BEGIN
 END $$;
 
 -- 15. Lista completa de convidados (apenas com sessão válida).
+DROP FUNCTION IF EXISTS public.admin_list_guests(text);
 CREATE OR REPLACE FUNCTION public.admin_list_guests(p_session text)
 RETURNS TABLE(
   id uuid, name text, phone text, token text, party_size integer, attending boolean,
-  message text, created_at timestamptz, responded_at timestamptz, active boolean
+  message text, created_at timestamptz, responded_at timestamptz, active boolean,
+  table_name text
 )
 LANGUAGE plpgsql
 SECURITY DEFINER
@@ -346,9 +351,27 @@ AS $$
 BEGIN
   PERFORM public.wedding_admin_require_session(p_session);
   RETURN QUERY
-  SELECT g.id, g.name, g.phone, g.token, g.party_size, g.attending, g.message, g.created_at, g.responded_at, g.active
+  SELECT g.id, g.name, g.phone, g.token, g.party_size, g.attending, g.message, g.created_at, g.responded_at, g.active, g.table_name
   FROM public.wedding_guests g
   ORDER BY g.created_at DESC;
+END $$;
+
+-- 15b. Atribuição de mesa a um convidado pelos noivos.
+CREATE OR REPLACE FUNCTION public.admin_set_guest_table(
+  p_session text,
+  p_token text,
+  p_table_name text
+)
+RETURNS void
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public, extensions, pg_temp
+AS $$
+BEGIN
+  PERFORM public.wedding_admin_require_session(p_session);
+  UPDATE public.wedding_guests SET
+    table_name = nullif(trim(coalesce(p_table_name, '')), '')
+  WHERE token = p_token;
 END $$;
 
 -- 16. Emissão de convite (o telemóvel evita convites duplicados para a mesma pessoa).
@@ -430,7 +453,8 @@ GRANT EXECUTE ON FUNCTION
   public.admin_list_guests(text),
   public.admin_create_guest(text, text, text, integer),
   public.admin_update_guest(text, text, text, text, integer, boolean),
-  public.admin_delete_guest(text, text)
+  public.admin_delete_guest(text, text),
+  public.admin_set_guest_table(text, text, text)
 TO anon, authenticated, service_role;
 
 -- Remove a função antiga sem autenticação (substituída por admin_create_guest).

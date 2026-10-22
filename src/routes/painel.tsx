@@ -11,6 +11,7 @@ import {
   adminCreateGuests,
   adminDeleteGuest,
   adminUpdateGuest,
+  adminSetGuestTable,
   type GuestRow,
   type DashboardStats,
 } from '@/lib/invitations.functions';
@@ -37,6 +38,8 @@ import {
   LoaderCircle,
   ShieldCheck,
   X,
+  UtensilsCrossed,
+  Sparkles,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import botanicals from '@/assets/wedding-botanicals.png';
@@ -128,11 +131,12 @@ function AdminPanelPage() {
   // Painel
   const [stats, setStats] = useState<DashboardStats | null>(null);
   const [guests, setGuests] = useState<GuestRow[]>([]);
-  const [activeTab, setActiveTab] = useState<'guests' | 'create'>('guests');
+  const [activeTab, setActiveTab] = useState<'guests' | 'tables' | 'create'>('guests');
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState<'all' | 'confirmed' | 'pending' | 'declined'>('all');
   const [copiedToken, setCopiedToken] = useState<string | null>(null);
   const [notice, setNotice] = useState('');
+  const [newTableName, setNewTableName] = useState('');
 
   // Emissão
   const [bulkText, setBulkText] = useState('');
@@ -155,6 +159,7 @@ function AdminPanelPage() {
   const createGuestsFn = useServerFn(adminCreateGuests);
   const deleteGuestFn = useServerFn(adminDeleteGuest);
   const updateGuestFn = useServerFn(adminUpdateGuest);
+  const setTableFn = useServerFn(adminSetGuestTable);
 
   useEffect(() => {
     // Remove o PIN antigo guardado em versões anteriores.
@@ -342,8 +347,23 @@ function AdminPanelPage() {
     }
   }
 
+  async function handleSetTable(guest: GuestRow, table: string) {
+    const val = table.trim();
+    try {
+      await setTableFn({ data: { session, token: guest.token, tableName: val || null } });
+      setGuests(prev => prev.map(g => (g.id === guest.id ? { ...g, tableName: val || null } : g)));
+      setNotice(`Mesa de ${guest.name} definida como "${val || 'Sem mesa'}".`);
+    } catch (err) {
+      guardSession(err, 'Não foi possível atribuir a mesa.');
+    }
+  }
+
   function inviteLink(token: string) {
     return `${typeof window !== 'undefined' ? window.location.origin : ''}/convite/${token}`;
+  }
+
+  function passeLink(token: string) {
+    return `${typeof window !== 'undefined' ? window.location.origin : ''}/passe/${token}`;
   }
 
   async function copyInviteLink(token: string) {
@@ -364,15 +384,17 @@ function AdminPanelPage() {
 
   function downloadCsv() {
     const q = (v: string) => `"${v.replace(/"/g, '""')}"`;
-    const header = ['Nome', 'Telefone', 'Pessoas', 'Estado', 'Mensagem', 'Data da resposta', 'Link do convite'];
+    const header = ['Nome', 'Telefone', 'Pessoas', 'Estado', 'Mesa', 'Mensagem', 'Data da resposta', 'Link do convite', 'Link do passe'];
     const rows = guests.map(g => [
       q(g.name),
       q(g.phone || ''),
       g.partySize,
       g.attending === true ? 'Confirmado' : g.attending === false ? 'Não vai' : 'Aguarda resposta',
+      q(g.tableName || 'Sem mesa'),
       q(g.message || ''),
       q(g.respondedAt ? new Date(g.respondedAt).toLocaleDateString('pt-AO') : ''),
       q(inviteLink(g.token)),
+      q(passeLink(g.token)),
     ]);
     const csv = '\uFEFF' + [header.join(';'), ...rows.map(r => r.join(';'))].join('\n');
     const url = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8;' }));
@@ -382,6 +404,36 @@ function AdminPanelPage() {
     a.click();
     URL.revokeObjectURL(url);
   }
+
+  const existingTables = useMemo(() => {
+    const set = new Set<string>();
+    for (const g of guests) {
+      if (g.tableName && g.tableName.trim()) set.add(g.tableName.trim());
+    }
+    return Array.from(set).sort((a, b) => a.localeCompare(b, undefined, { numeric: true }));
+  }, [guests]);
+
+  const tableGroups = useMemo(() => {
+    const map = new Map<string, { table: string; guests: GuestRow[]; totalConfirmed: number; totalPending: number }>();
+    map.set('__none__', { table: 'Sem mesa atribuída', guests: [], totalConfirmed: 0, totalPending: 0 });
+
+    for (const t of existingTables) {
+      map.set(t, { table: t, guests: [], totalConfirmed: 0, totalPending: 0 });
+    }
+
+    for (const g of guests) {
+      const key = g.tableName && g.tableName.trim() ? g.tableName.trim() : '__none__';
+      if (!map.has(key)) {
+        map.set(key, { table: key, guests: [], totalConfirmed: 0, totalPending: 0 });
+      }
+      const entry = map.get(key)!;
+      entry.guests.push(g);
+      if (g.attending === true) entry.totalConfirmed += g.partySize;
+      else if (g.attending === null) entry.totalPending += g.partySize;
+    }
+
+    return Array.from(map.values()).filter(group => group.table !== 'Sem mesa atribuída' || group.guests.length > 0);
+  }, [guests, existingTables]);
 
   const filteredGuests = useMemo(() => {
     const term = search.trim().toLowerCase();
@@ -602,6 +654,15 @@ function AdminPanelPage() {
           <button
             type="button"
             role="tab"
+            aria-selected={activeTab === 'tables'}
+            className="admin-tab"
+            onClick={() => setActiveTab('tables')}
+          >
+            <UtensilsCrossed size={16} /> Mesas <span className="admin-tab-count">{existingTables.length}</span>
+          </button>
+          <button
+            type="button"
+            role="tab"
             aria-selected={activeTab === 'create'}
             className="admin-tab"
             onClick={() => setActiveTab('create')}
@@ -670,6 +731,11 @@ function AdminPanelPage() {
                       <div className="admin-guest-line">
                         <span className="admin-guest-name">{g.name}</span>
                         <span className="admin-chip">{g.partySize} {g.partySize === 1 ? 'pessoa' : 'pessoas'}</span>
+                        {g.tableName && (
+                          <span className="admin-table-chip">
+                            <UtensilsCrossed size={11} /> {g.tableName}
+                          </span>
+                        )}
                         {g.attending === true && <span className="admin-status is-confirmed"><CheckCircle2 size={12} /> Confirmado</span>}
                         {g.attending === false && <span className="admin-status is-declined"><XCircle size={12} /> Não vai</span>}
                         {g.attending === null && <span className="admin-status is-pending"><Clock size={12} /> Aguarda resposta</span>}
@@ -684,6 +750,30 @@ function AdminPanelPage() {
                     </div>
 
                     <div className="admin-guest-actions">
+                      <select
+                        className="admin-table-select"
+                        aria-label={`Mesa de ${g.name}`}
+                        title="Atribuir ou alterar mesa"
+                        value={g.tableName || ''}
+                        onChange={e => {
+                          const v = e.target.value;
+                          if (v === '__new__') {
+                            const custom = window.prompt(`Nome ou número da mesa para ${g.name}:`, 'Mesa ');
+                            if (custom && custom.trim()) handleSetTable(g, custom);
+                          } else {
+                            handleSetTable(g, v);
+                          }
+                        }}
+                      >
+                        <option value="">Sem mesa</option>
+                        {existingTables.map(t => (
+                          <option key={t} value={t}>
+                            {t}
+                          </option>
+                        ))}
+                        <option value="__new__">+ Nova mesa…</option>
+                      </select>
+
                       <a href={whatsAppUrl(g)} target="_blank" rel="noreferrer" className="admin-whatsapp">
                         <MessageCircle size={15} /> WhatsApp
                       </a>
@@ -697,9 +787,19 @@ function AdminPanelPage() {
                         rel="noreferrer"
                         className="admin-icon-btn"
                         aria-label={`Abrir o convite de ${g.name}`}
-                        title="Abrir convite"
+                        title="Abrir convite geral"
                       >
                         <ExternalLink size={15} />
+                      </a>
+                      <a
+                        href={`/passe/${g.token}`}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="admin-icon-btn text-primary"
+                        aria-label={`Abrir passe de portaria de ${g.name}`}
+                        title="Ver passe do porteiro"
+                      >
+                        <ShieldCheck size={15} />
                       </a>
                       <select
                         className="admin-status-select"
@@ -724,6 +824,108 @@ function AdminPanelPage() {
                   </li>
                 ))}
               </ul>
+            )}
+          </section>
+        )}
+
+        {activeTab === 'tables' && (
+          <section className="admin-panel admin-tables-view" aria-label="Gestão e Organização das Mesas">
+            <div className="flex justify-between items-center flex-wrap gap-4 border-b border-border pb-4">
+              <div>
+                <h2 className="admin-section-title flex items-center gap-2">
+                  <UtensilsCrossed size={20} className="text-primary" /> Organização das Mesas do Copo-d'água
+                </h2>
+                <p className="admin-hint mt-1">
+                  Distribui os teus convidados por mesas. O porteiro verá a mesa de cada um ao escanear o QR Code à entrada!
+                </p>
+              </div>
+
+              <div className="flex gap-2 items-center flex-wrap">
+                <input
+                  className="admin-input"
+                  style={{ maxWidth: 220 }}
+                  placeholder="Nome/Número (ex: Mesa 1, Família)"
+                  value={newTableName}
+                  onChange={e => setNewTableName(e.target.value)}
+                />
+                <Button
+                  size="sm"
+                  className="wedding-cta"
+                  disabled={!newTableName.trim()}
+                  onClick={() => {
+                    const trimmed = newTableName.trim();
+                    if (!existingTables.includes(trimmed)) {
+                      setNotice(`Mesa "${trimmed}" pronta! Agora podes selecioná-la nos convidados.`);
+                      setNewTableName('');
+                    }
+                  }}
+                >
+                  <Plus /> Criar Mesa
+                </Button>
+              </div>
+            </div>
+
+            {tableGroups.length === 0 ? (
+              <div className="admin-empty">
+                <UtensilsCrossed size={28} aria-hidden="true" />
+                <p className="admin-empty-title">Ainda não há mesas configuradas.</p>
+                <p className="admin-empty-text">Cria a tua primeira mesa acima ou atribui uma mesa aos convidados na aba Convidados.</p>
+              </div>
+            ) : (
+              <div className="admin-tables-grid">
+                {tableGroups.map(group => (
+                  <div key={group.table} className="admin-table-card">
+                    <div className="admin-table-card-head">
+                      <div>
+                        <h3 className="admin-table-card-title">
+                          <UtensilsCrossed size={16} /> {group.table}
+                        </h3>
+                        <p className="admin-table-card-sub">
+                          {group.totalConfirmed} confirmados • {group.guests.length} convite(s)
+                        </p>
+                      </div>
+                    </div>
+
+                    <ul className="admin-table-guest-list">
+                      {group.guests.map(g => (
+                        <li key={g.id} className="admin-table-guest-item">
+                          <div>
+                            <span className="admin-table-guest-name">{g.name}</span>
+                            <span className="admin-table-guest-seats block">
+                              {g.partySize} {g.partySize === 1 ? 'pessoa' : 'pessoas'}
+                              {g.attending === true && ' • Confirmado'}
+                              {g.attending === null && ' • Pendente'}
+                              {g.attending === false && ' • Recusado'}
+                            </span>
+                          </div>
+                          <select
+                            className="admin-table-select text-xs"
+                            aria-label={`Mudar mesa de ${g.name}`}
+                            value={g.tableName || ''}
+                            onChange={e => {
+                              const v = e.target.value;
+                              if (v === '__new__') {
+                                const custom = window.prompt(`Nova mesa para ${g.name}:`, 'Mesa ');
+                                if (custom && custom.trim()) handleSetTable(g, custom);
+                              } else {
+                                handleSetTable(g, v);
+                              }
+                            }}
+                          >
+                            <option value="">Sem mesa</option>
+                            {existingTables.map(t => (
+                              <option key={t} value={t}>
+                                {t}
+                              </option>
+                            ))}
+                            <option value="__new__">+ Nova mesa…</option>
+                          </select>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                ))}
+              </div>
             )}
           </section>
         )}

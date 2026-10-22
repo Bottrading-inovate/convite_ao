@@ -60,6 +60,7 @@ export interface GuestDetails {
   attending?: boolean | null;
   partySize?: number;
   respondedAt?: string | null;
+  tableName?: string | null;
 }
 
 export const lookupInvitation = createServerFn({ method: 'POST' })
@@ -73,6 +74,7 @@ export const lookupInvitation = createServerFn({ method: 'POST' })
       attending: boolean | null;
       party_size: number;
       responded_at: string | null;
+      table_name?: string | null;
     }> | null)?.[0];
     return guest
       ? {
@@ -80,6 +82,7 @@ export const lookupInvitation = createServerFn({ method: 'POST' })
           attending: guest.attending ?? null,
           partySize: guest.party_size ?? 1,
           respondedAt: guest.responded_at ?? null,
+          tableName: guest.table_name ?? null,
         }
       : null;
   });
@@ -155,6 +158,7 @@ export interface GuestRow {
   createdAt: string;
   respondedAt: string | null;
   active: boolean;
+  tableName?: string | null;
 }
 
 export interface DashboardStats {
@@ -238,6 +242,7 @@ export const adminGetDashboard = createServerFn({ method: 'POST' })
     type Raw = {
       id: string; name: string; phone: string | null; token: string; party_size: number | null;
       attending: boolean | null; message: string | null; created_at: string; responded_at: string | null; active: boolean | null;
+      table_name?: string | null;
     };
     const guests: GuestRow[] = ((rows as Raw[] | null) ?? []).map(r => ({
       id: r.id,
@@ -250,6 +255,7 @@ export const adminGetDashboard = createServerFn({ method: 'POST' })
       createdAt: r.created_at,
       respondedAt: r.responded_at,
       active: r.active ?? true,
+      tableName: r.table_name ?? null,
     }));
 
     const stats: DashboardStats = {
@@ -335,3 +341,23 @@ export const adminUpdateGuest = createServerFn({ method: 'POST' })
     if (error) throw dbError(error, 'Não foi possível atualizar o convidado.');
     return { success: true };
   });
+
+export const adminSetGuestTable = createServerFn({ method: 'POST' })
+  .validator((data: unknown) =>
+    z.object({
+      session: sessionSchema,
+      token: invitationTokenSchema,
+      tableName: z.string().trim().max(100).nullable().optional(),
+    }).parse(data),
+  )
+  .handler(async ({ data }) => {
+    noStore();
+    const { error } = await getSupabaseServerClient().rpc('admin_set_guest_table', {
+      p_session: data.session,
+      p_token: data.token,
+      p_table_name: data.tableName || null,
+    });
+    if (error) throw dbError(error, 'Não foi possível atribuir a mesa ao convidado.');
+    return { success: true };
+  });
+

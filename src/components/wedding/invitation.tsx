@@ -23,6 +23,8 @@ import {
   XCircle,
   Sparkles,
   Lock,
+  UtensilsCrossed,
+  Eye,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import botanicals from '@/assets/wedding-botanicals.png';
@@ -67,12 +69,14 @@ export function WeddingInvitation({
   token,
   initialAttending = null,
   initialPartySize = 1,
+  tableName = null,
   invalid = false,
 }: {
   guestName?: string | undefined;
   token?: string | undefined;
   initialAttending?: boolean | null | undefined;
   initialPartySize?: number | undefined;
+  tableName?: string | null | undefined;
   invalid?: boolean;
 }) {
   const [opened, setOpened] = useState(false);
@@ -115,7 +119,7 @@ export function WeddingInvitation({
     const tick = () => setCountdown(countdownToWedding(Date.now()));
     tick();
     const interval = window.setInterval(tick, 1000);
-    if (token) setInviteUrl(`${window.location.origin}/convite/${token}`);
+    if (token) setInviteUrl(`${window.location.origin}/passe/${token}`);
     return () => window.clearInterval(interval);
   }, [token]);
 
@@ -616,15 +620,33 @@ export function WeddingInvitation({
               <div className="guest-pass mt-8">
                 <QrCode size={22} />
                 <h3 className="section-title text-2xl">O teu passe digital</h3>
-                <p className="body-copy">Apresenta este código QR na entrada do Salão de Festas.</p>
+                <p className="body-copy">Apresenta este código QR na entrada do Salão de Festas para validação da portaria.</p>
+                {tableName && (
+                  <div className="my-2 py-1.5 px-3 bg-secondary/70 border border-border rounded-md text-sm text-primary inline-flex items-center gap-1.5">
+                    <UtensilsCrossed size={14} />
+                    <span>Mesa reservada: <strong>{tableName}</strong></span>
+                  </div>
+                )}
                 <div className="p-3 bg-white rounded-lg shadow-sm border border-border">
                   <QRCodeSVG id="guest-qr" value={inviteUrl} size={170} marginSize={3} />
                 </div>
-                <div className="flex gap-3 flex-wrap justify-center">
+                <div className="flex gap-3 flex-wrap justify-center items-center">
                   <Button variant="outline" className="wedding-cta" onClick={downloadQr}>
-                    <Download /> Guardar QR Code
+                    <Download /> Guardar QR Code (PNG)
                   </Button>
                 </div>
+                {token && (
+                  <p className="mt-2">
+                    <a
+                      href={`/passe/${token}`}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="text-xs text-primary underline inline-flex items-center gap-1 hover:opacity-80"
+                    >
+                      <Eye size={13} /> Ver o passe que a portaria verá ao escanear
+                    </a>
+                  </p>
+                )}
               </div>
             </div>
           ) : (

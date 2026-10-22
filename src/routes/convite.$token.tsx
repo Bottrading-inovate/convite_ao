@@ -29,6 +29,7 @@ function PersonalInvitation() {
       token={data ? token : undefined}
       initialAttending={data?.attending}
       initialPartySize={data?.partySize}
+      tableName={data?.tableName}
       invalid={!data}
     />
   );

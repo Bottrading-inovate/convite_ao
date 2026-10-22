@@ -1377,3 +1377,337 @@ html { scroll-behavior: smooth; scroll-padding-top: 80px; }
     justify-content: center;
   }
 }
+
+/* ==============================================================================
+ * PASSE DIGITAL DA PORTARIA (/passe/$token)
+ * ============================================================================== */
+
+.passe-page-wrapper {
+  min-height: 100vh;
+  background-color: var(--background);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 32px 16px;
+  position: relative;
+  overflow: hidden;
+  font-family: var(--font-body);
+}
+
+.passe-bg-decorations {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0.12;
+}
+
+.passe-botanical-top {
+  position: absolute;
+  top: -80px;
+  right: -80px;
+  width: 280px;
+  transform: rotate(45deg);
+}
+
+.passe-botanical-bottom {
+  position: absolute;
+  bottom: -80px;
+  left: -80px;
+  width: 280px;
+  transform: rotate(-135deg);
+}
+
+.passe-container {
+  width: 100%;
+  max-width: 480px;
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.passe-header {
+  text-align: center;
+  margin-bottom: 24px;
+}
+
+.passe-title {
+  font: 26px var(--font-display);
+  color: var(--primary);
+  margin: 8px 0 4px;
+  letter-spacing: 0.02em;
+}
+
+.passe-subtitle {
+  font-size: 13px;
+  color: var(--muted-foreground);
+  margin: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.passe-card {
+  width: 100%;
+  background: #ffffff;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  box-shadow: 0 12px 32px rgba(44, 76, 56, 0.08);
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.passe-card.is-invalid {
+  text-align: center;
+  align-items: center;
+  padding: 40px 24px;
+}
+
+.passe-status-badge {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 14px 18px;
+  border-radius: 8px;
+  border: 1px solid transparent;
+}
+
+.passe-status-badge.status-confirmed {
+  background-color: oklch(0.96 0.04 145);
+  border-color: oklch(0.85 0.08 145);
+}
+
+.passe-status-badge.status-declined {
+  background-color: oklch(0.96 0.03 25);
+  border-color: oklch(0.85 0.08 25);
+}
+
+.passe-status-badge.status-pending {
+  background-color: oklch(0.97 0.04 85);
+  border-color: oklch(0.88 0.08 85);
+}
+
+.status-label {
+  display: block;
+  font-size: 14px;
+  letter-spacing: 0.05em;
+  font-weight: 700;
+}
+
+.status-desc {
+  font-size: 12px;
+  margin: 2px 0 0;
+}
+
+.passe-guest-highlight {
+  text-align: center;
+  padding: 8px 0;
+  border-bottom: 1px dashed var(--border);
+}
+
+.passe-label {
+  display: block;
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted-foreground);
+  margin-bottom: 4px;
+  font-weight: 600;
+}
+
+.passe-guest-name {
+  font: 30px var(--font-display);
+  color: var(--primary);
+  margin: 4px 0 0;
+  line-height: 1.2;
+}
+
+.passe-info-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+@media (max-width: 440px) {
+  .passe-info-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.passe-info-box {
+  background: var(--background);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 12px 14px;
+}
+
+.passe-info-box.is-table-highlight {
+  background: oklch(0.97 0.02 141);
+  border-color: var(--primary);
+}
+
+.passe-info-val {
+  margin: 4px 0 0;
+  font-size: 14px;
+  color: var(--foreground);
+}
+
+.table-chip {
+  display: inline-flex;
+  align-items: center;
+  background: #ffffff;
+  padding: 2px 8px;
+  border-radius: 4px;
+  border: 1px solid var(--border);
+  color: var(--primary);
+}
+
+.passe-notice {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  background: var(--notice-background);
+  color: var(--notice-foreground);
+  font-size: 12px;
+  padding: 10px 14px;
+  border-radius: 6px;
+  line-height: 1.4;
+}
+
+.passe-event-details {
+  border-top: 1px dashed var(--border);
+  padding-top: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.passe-detail-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  color: var(--muted-foreground);
+}
+
+.passe-actions {
+  margin-top: 4px;
+}
+
+/* ==============================================================================
+ * GESTÃO DE MESAS NO PAINEL DOS NOIVOS
+ * ============================================================================== */
+
+.admin-table-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: var(--secondary);
+  border: 1px solid var(--border);
+  color: var(--primary);
+  font-size: 11px;
+  padding: 2px 7px;
+  border-radius: 4px;
+  font-weight: 500;
+}
+
+.admin-table-select {
+  height: 32px;
+  font-size: 12px;
+  border-radius: 6px;
+  border: 1px solid var(--border);
+  background: #ffffff;
+  padding: 0 8px;
+  color: var(--foreground);
+  cursor: pointer;
+  max-width: 130px;
+}
+
+.admin-table-select:focus {
+  outline: none;
+  border-color: var(--primary);
+}
+
+.admin-tables-view {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.admin-tables-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 16px;
+}
+
+.admin-table-card {
+  background: #ffffff;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 16px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.03);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.admin-table-card-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  border-bottom: 1px solid var(--border);
+  padding-bottom: 10px;
+}
+
+.admin-table-card-title {
+  font: 18px var(--font-display);
+  color: var(--primary);
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.admin-table-card-sub {
+  font-size: 11px;
+  color: var(--muted-foreground);
+  margin: 2px 0 0;
+}
+
+.admin-table-guest-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  max-height: 240px;
+  overflow-y: auto;
+}
+
+.admin-table-guest-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 12px;
+  padding: 4px 6px;
+  border-radius: 4px;
+  background: var(--background);
+}
+
+.admin-table-guest-item:hover {
+  background: var(--secondary);
+}
+
+.admin-table-guest-name {
+  font-weight: 500;
+  color: var(--foreground);
+}
+
+.admin-table-guest-seats {
+  font-size: 11px;
+  color: var(--muted-foreground);
+}
