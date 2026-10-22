@@ -1,7 +1,6 @@
 import { useState } from 'react';
 import { useServerFn } from '@tanstack/react-start';
-import { useNavigate } from '@tanstack/react-router';
-import { LoaderCircle } from 'lucide-react';
+import { LoaderCircle, CheckCircle2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { rsvpSchema, submitRsvp } from '@/lib/invitations.functions';
 
@@ -14,20 +13,47 @@ export function RsvpForm({ defaultName = '' }: { defaultName?: string }) {
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
   const [declined, setDeclined] = useState(false);
+  const [confirmed, setConfirmed] = useState(false);
   const submit = useServerFn(submitRsvp);
-  const navigate = useNavigate();
 
   async function onSubmit(e: React.FormEvent) {
-    e.preventDefault(); setError('');
+    e.preventDefault();
+    setError('');
     const parsed = rsvpSchema.safeParse({ name, phone, attending, guests, message });
-    if (!parsed.success) { setError(parsed.error.issues[0]?.message ?? 'Verifica os dados.'); return; }
+    if (!parsed.success) {
+      setError(parsed.error.issues[0]?.message ?? 'Verifica os dados.');
+      return;
+    }
     setBusy(true);
     try {
       const row = await submit({ data: parsed.data });
-      if (row.attending) await navigate({ to: '/convite/$token', params: { token: row.token }, hash: 'presenca' });
-      else setDeclined(true);
-    } catch (err) { setError(err instanceof Error ? err.message : 'Não foi possível guardar.'); }
-    finally { setBusy(false); }
+      if (row.attending) {
+        setConfirmed(true);
+      } else {
+        setDeclined(true);
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Não foi possível guardar.');
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  if (confirmed) {
+    return (
+      <div className="p-6 bg-secondary/60 rounded-xl border border-border text-center my-4 animate-in fade-in zoom-in-95">
+        <div className="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-3 text-primary">
+          <CheckCircle2 size={28} />
+        </div>
+        <h3 className="section-title text-2xl mb-2">Presença Registada!</h3>
+        <p className="body-copy text-base">
+          Muito obrigado pela confirmação, <strong>{name}</strong>! 💚
+        </p>
+        <p className="body-copy text-sm text-muted-foreground mt-2 max-w-md mx-auto">
+          A tua resposta foi guardada com sucesso. Os noivos irão entrar em contacto contigo pelo WhatsApp com o teu convite pessoal e o teu passe digital exclusivo.
+        </p>
+      </div>
+    );
   }
 
   if (declined) return <p className="body-copy rsvp-done">Obrigado por nos avisares. Vamos sentir a tua falta! 💚</p>;

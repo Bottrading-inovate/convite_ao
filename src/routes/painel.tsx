@@ -42,6 +42,14 @@ import {
   Sparkles,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
 import botanicals from '@/assets/wedding-botanicals.png';
 
 export const Route = createFileRoute('/painel')({
@@ -137,6 +145,19 @@ function AdminPanelPage() {
   const [copiedToken, setCopiedToken] = useState<string | null>(null);
   const [notice, setNotice] = useState('');
   const [newTableName, setNewTableName] = useState('');
+  const [tableModalGuest, setTableModalGuest] = useState<GuestRow | null>(null);
+  const [tableModalValue, setTableModalValue] = useState('');
+
+  function openTableModal(guest: GuestRow) {
+    setTableModalGuest(guest);
+    setTableModalValue(guest.tableName || '');
+  }
+
+  async function saveTableModal() {
+    if (!tableModalGuest) return;
+    await handleSetTable(tableModalGuest, tableModalValue);
+    setTableModalGuest(null);
+  }
 
   // Emissão
   const [bulkText, setBulkText] = useState('');
@@ -732,9 +753,14 @@ function AdminPanelPage() {
                         <span className="admin-guest-name">{g.name}</span>
                         <span className="admin-chip">{g.partySize} {g.partySize === 1 ? 'pessoa' : 'pessoas'}</span>
                         {g.tableName && (
-                          <span className="admin-table-chip">
+                          <button
+                            type="button"
+                            onClick={() => openTableModal(g)}
+                            className="admin-table-chip transition-all hover:scale-105 cursor-pointer"
+                            title="Clique para alterar a mesa"
+                          >
                             <UtensilsCrossed size={11} /> {g.tableName}
-                          </span>
+                          </button>
                         )}
                         {g.attending === true && <span className="admin-status is-confirmed"><CheckCircle2 size={12} /> Confirmado</span>}
                         {g.attending === false && <span className="admin-status is-declined"><XCircle size={12} /> Não vai</span>}
@@ -750,29 +776,16 @@ function AdminPanelPage() {
                     </div>
 
                     <div className="admin-guest-actions">
-                      <select
-                        className="admin-table-select"
-                        aria-label={`Mesa de ${g.name}`}
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => openTableModal(g)}
+                        className="h-8 text-xs gap-1.5"
                         title="Atribuir ou alterar mesa"
-                        value={g.tableName || ''}
-                        onChange={e => {
-                          const v = e.target.value;
-                          if (v === '__new__') {
-                            const custom = window.prompt(`Nome ou número da mesa para ${g.name}:`, 'Mesa ');
-                            if (custom && custom.trim()) handleSetTable(g, custom);
-                          } else {
-                            handleSetTable(g, v);
-                          }
-                        }}
                       >
-                        <option value="">Sem mesa</option>
-                        {existingTables.map(t => (
-                          <option key={t} value={t}>
-                            {t}
-                          </option>
-                        ))}
-                        <option value="__new__">+ Nova mesa…</option>
-                      </select>
+                        <UtensilsCrossed size={13} className="text-primary" />
+                        <span>{g.tableName ? g.tableName : 'Mesa'}</span>
+                      </Button>
 
                       <a href={whatsAppUrl(g)} target="_blank" rel="noreferrer" className="admin-whatsapp">
                         <MessageCircle size={15} /> WhatsApp
@@ -898,28 +911,16 @@ function AdminPanelPage() {
                               {g.attending === false && ' • Recusado'}
                             </span>
                           </div>
-                          <select
-                            className="admin-table-select text-xs"
-                            aria-label={`Mudar mesa de ${g.name}`}
-                            value={g.tableName || ''}
-                            onChange={e => {
-                              const v = e.target.value;
-                              if (v === '__new__') {
-                                const custom = window.prompt(`Nova mesa para ${g.name}:`, 'Mesa ');
-                                if (custom && custom.trim()) handleSetTable(g, custom);
-                              } else {
-                                handleSetTable(g, v);
-                              }
-                            }}
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => openTableModal(g)}
+                            className="h-7 text-xs gap-1"
+                            title="Mudar mesa"
                           >
-                            <option value="">Sem mesa</option>
-                            {existingTables.map(t => (
-                              <option key={t} value={t}>
-                                {t}
-                              </option>
-                            ))}
-                            <option value="__new__">+ Nova mesa…</option>
-                          </select>
+                            <UtensilsCrossed size={11} className="text-primary" />
+                            <span>{g.tableName || 'Mudar'}</span>
+                          </Button>
                         </li>
                       ))}
                     </ul>
@@ -1010,6 +1011,112 @@ function AdminPanelPage() {
           </section>
         )}
       </main>
+
+      {/* DIALOG SHADCN: ATRIBUIR / EDITAR MESA */}
+      <Dialog
+        open={!!tableModalGuest}
+        onOpenChange={open => {
+          if (!open) setTableModalGuest(null);
+        }}
+      >
+        <DialogContent className="sm:max-w-md bg-white border border-border shadow-2xl p-6">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-xl font-serif text-primary">
+              <UtensilsCrossed size={20} /> Atribuir Mesa
+            </DialogTitle>
+            <DialogDescription className="text-sm text-muted-foreground">
+              {tableModalGuest && (
+                <span>
+                  Define a mesa para <strong>{tableModalGuest.name}</strong> ({tableModalGuest.partySize}{' '}
+                  {tableModalGuest.partySize === 1 ? 'lugar' : 'lugares'}).
+                </span>
+              )}
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4 py-3">
+            <div className="space-y-1.5">
+              <label
+                htmlFor="table-name-modal"
+                className="text-xs font-semibold uppercase tracking-wider text-muted-foreground block"
+              >
+                Nome ou Número da Mesa
+              </label>
+              <input
+                id="table-name-modal"
+                className="admin-input w-full"
+                placeholder="Ex.: Mesa 1, Mesa VIP, Família..."
+                value={tableModalValue}
+                onChange={e => setTableModalValue(e.target.value)}
+                autoFocus
+              />
+            </div>
+
+            {existingTables.length > 0 && (
+              <div className="space-y-1.5">
+                <span className="text-xs text-muted-foreground block font-medium">
+                  Ou clica numa mesa já existente:
+                </span>
+                <div className="flex flex-wrap gap-1.5 max-h-36 overflow-y-auto p-2 border border-border/60 rounded-md bg-secondary/30">
+                  {existingTables.map(t => (
+                    <button
+                      key={t}
+                      type="button"
+                      onClick={() => setTableModalValue(t)}
+                      className={`text-xs px-2.5 py-1 rounded-md border transition-all cursor-pointer ${
+                        tableModalValue.trim().toLowerCase() === t.trim().toLowerCase()
+                          ? 'bg-primary text-white border-primary font-medium shadow-sm'
+                          : 'bg-white hover:bg-secondary border-border text-foreground'
+                      }`}
+                    >
+                      {t}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+
+          <DialogFooter className="flex justify-between sm:justify-between items-center gap-2 pt-3 border-t border-border">
+            {tableModalGuest?.tableName ? (
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                className="text-destructive border-destructive/30 hover:bg-destructive/10"
+                onClick={async () => {
+                  if (tableModalGuest) {
+                    await handleSetTable(tableModalGuest, '');
+                    setTableModalGuest(null);
+                  }
+                }}
+              >
+                Remover Mesa
+              </Button>
+            ) : (
+              <span />
+            )}
+            <div className="flex gap-2">
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => setTableModalGuest(null)}
+              >
+                Cancelar
+              </Button>
+              <Button
+                type="button"
+                size="sm"
+                className="wedding-cta"
+                onClick={saveTableModal}
+              >
+                Guardar Mesa
+              </Button>
+            </div>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

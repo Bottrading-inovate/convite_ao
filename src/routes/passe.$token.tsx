@@ -175,15 +175,6 @@ function PassePortariaPage() {
                 <span>Copo-d'água às 19h30 • Salão de Festas "Detalhe Precioso"</span>
               </div>
             </div>
-
-            {/* Ações */}
-            <div className="passe-actions">
-              <Button asChild variant="outline" className="wedding-cta w-full">
-                <Link to="/convite/$token" params={{ token }}>
-                  Ver convite completo com programação <ExternalLink size={15} className="ml-1" />
-                </Link>
-              </Button>
-            </div>
           </article>
         )}
       </main>
