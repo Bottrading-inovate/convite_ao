@@ -167,12 +167,12 @@ html { scroll-behavior: smooth; scroll-padding-top: 80px; }
 .wedding-hero::after { content: ''; position: absolute; inset: 0; background: var(--hero-text-veil); pointer-events: none; }
 .hero-center { text-align: center; position: relative; z-index: 1; width: min(740px, 100%); animation: arrive 1.4s ease both; }
 .hero-center > .eyebrow, .hero-center .hero-caption, .hero-center .scroll-link { color: var(--foreground); }
-.hero-center > .eyebrow { font-size: 11px; letter-spacing: 0; }
-.hero-center .scroll-link { font-size: 10px; letter-spacing: 0; }
-.eyebrow { font-size: 9px; letter-spacing: 3px; text-transform: uppercase; font-weight: 500; color: var(--muted-foreground); }
+.hero-center > .eyebrow { font-size: 13px; letter-spacing: 0; font-weight: 500; }
+.hero-center .scroll-link { font-size: 11px; letter-spacing: 0; }
+.eyebrow { font-size: 11.5px; letter-spacing: 2.5px; text-transform: uppercase; font-weight: 600; color: var(--muted-foreground); }
 .couple-title { font: 74px/1.02 var(--font-display); font-weight: 400; margin: 22px 0 10px; color: var(--primary); }
 .couple-title .ampersand { font: italic 55px var(--font-display); color: var(--primary); margin: 0 8px; }
-.hero-caption { font-size: 12px; color: var(--muted-foreground); margin-bottom: 26px; }
+.hero-caption { font-size: 14.5px; color: var(--muted-foreground); margin-bottom: 26px; line-height: 1.7; }
 .envelope-scene { position: relative; width: 370px; height: 225px; margin: 0 auto 24px; perspective: 900px; }
 .envelope { height: 100%; width: 100%; position: relative; background: var(--primary); box-shadow: var(--shadow-paper); border-radius: 3px; }
 .envelope:before { content: ''; position: absolute; inset: 0; background: color-mix(in oklch, var(--sage) 23%, var(--primary)); clip-path: polygon(0 0,50% 58%,100% 0); transform-origin: top; transition: transform 1s ease; z-index: 3; }
@@ -206,21 +206,24 @@ html { scroll-behavior: smooth; scroll-padding-top: 80px; }
 .countdown { display: flex; gap: 22px; margin: 30px 0; }
 .count-unit { min-width: 52px; text-align: center; }
 .count-number { font: 39px var(--font-display); color: var(--primary); }
-.count-label { font-size: 8px; text-transform: uppercase; letter-spacing: 1.5px; margin-top: 8px; color: var(--muted-foreground); }
-.body-copy { font-size: 12px; line-height: 1.9; color: var(--muted-foreground); }
-.programme-band { background: var(--primary); color: var(--primary-foreground); text-align: center; padding: 66px 24px 78px; }
+.count-label { font-size: 10px; text-transform: uppercase; letter-spacing: 1.5px; margin-top: 8px; color: var(--muted-foreground); }
+.body-copy { font-size: 14.5px; line-height: 1.8; color: var(--muted-foreground); }
+.programme-band { background: var(--primary); color: var(--primary-foreground); text-align: center; padding: 72px 24px 84px; }
 .programme-band .section-title, .programme-band .eyebrow { color: var(--primary-foreground); }
-.timeline { display: grid; grid-template-columns: repeat(3,1fr); max-width: 790px; margin: 42px auto 0; position: relative; }
-.timeline:before { content: ''; position: absolute; left: 16%; right: 16%; top: 24px; height: 1px; background: var(--sage); }
-.timeline-item { position: relative; }
-.timeline-icon { width: 48px; height: 48px; display: grid; place-items: center; background: var(--primary); border: 1px solid var(--sage); border-radius: 50%; margin: auto auto 18px; }
-.timeline-time { font: 30px var(--font-display); margin-bottom: 10px; }
-.timeline-name { font-size: 11px; }
-.timeline-detail { font-size: 9px; opacity: .7; margin-top: 9px; }
+.timeline { display: grid; grid-template-columns: repeat(4, 1fr); max-width: 1140px; margin: 48px auto 0; position: relative; gap: 20px; }
+.timeline:before { content: ''; position: absolute; left: calc(12.5% - 6px); right: calc(12.5% - 6px); top: 26px; height: 2px; background: rgba(255, 255, 255, 0.35); z-index: 1; }
+.timeline-item { position: relative; display: flex; flex-direction: column; align-items: center; text-align: center; z-index: 2; padding: 0 6px; }
+.timeline-icon { width: 52px; height: 52px; display: grid; place-items: center; background: var(--primary); border: 2px solid rgba(255, 255, 255, 0.6); border-radius: 50%; margin-bottom: 18px; color: #fff; box-shadow: 0 4px 14px rgba(0, 0, 0, 0.2); transition: transform 0.25s, border-color 0.25s; }
+.timeline-item:hover .timeline-icon { transform: scale(1.08); border-color: #fff; }
+.timeline-content { width: 100%; }
+.timeline-time { font: 25px/1.2 var(--font-display); font-weight: 700; color: #ffffff; margin-bottom: 8px; letter-spacing: -0.2px; }
+.timeline-name { font-size: 16px; font-weight: 600; color: #ffffff; line-height: 1.35; margin-bottom: 8px; }
+.timeline-detail { font-size: 13.5px; line-height: 1.6; color: rgba(255, 255, 255, 0.9); margin-top: 6px; }
+.timeline-badge { display: inline-block; font-size: 11px; font-weight: 600; letter-spacing: 0.5px; text-transform: uppercase; padding: 3px 9px; border-radius: 9999px; background: rgba(255, 255, 255, 0.16); color: #ffffff; margin-top: 10px; border: 1px solid rgba(255, 255, 255, 0.25); }
 .locations { text-align: center; }
 .location-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 50px; margin-top: 38px; text-align: left; }
 .location-item { border-top: 1px solid var(--border); padding-top: 24px; }
-.location-item h3 { font: 27px var(--font-display); margin: 13px 0; }
+.location-item h3 { font: 28px var(--font-display); margin: 13px 0; }
 .location-item .body-copy { min-height: 65px; }
 .details-band { background: var(--secondary); }
 .wedding-notice { display: flex; align-items: center; justify-content: center; gap: 14px; padding: 24px; border-block: 1px solid var(--border); background: var(--notice-background); color: var(--notice-foreground); text-align: center; }
@@ -232,26 +235,39 @@ html { scroll-behavior: smooth; scroll-padding-top: 80px; }
 .swatch { height: 40px; width: 40px; border-radius: 50%; border: 1px solid var(--border); }
 .swatch:nth-child(1) { background: var(--primary); }.swatch:nth-child(2) { background: var(--sage); }.swatch:nth-child(3) { background: var(--secondary); }.swatch:nth-child(4) { background: var(--paper); }
 .quote { font: italic 26px/1.55 var(--font-display); color: var(--primary); text-align: center; }
-.quote-source { display: block; font: 9px var(--font-body); margin-top: 18px; text-transform: uppercase; letter-spacing: 2px; }
+.quote-source { display: block; font: 10.5px var(--font-body); margin-top: 18px; text-transform: uppercase; letter-spacing: 2px; }
 .rsvp-section { text-align: center; max-width: 760px; }
 .rsvp-frame { width: 100%; height: 640px; border: 1px solid var(--border); margin-top: 28px; background: var(--paper); }
 .guest-pass { border-top: 1px solid var(--border); margin-top: 28px; padding-top: 25px; display: flex; flex-direction: column; align-items: center; gap: 16px; }
 .contact-footer { background: var(--secondary); text-align: center; padding: 52px 20px 26px; }
 .contact-links { display: flex; gap: 22px; justify-content: center; flex-wrap: wrap; margin: 24px 0 45px; }
-.footer-name { font: 33px var(--font-script); margin-bottom: 10px; }
-.footer-note { font-size: 8px; letter-spacing: 2px; text-transform: uppercase; color: var(--muted-foreground); }
-.wedding-cta { font-size: 10px; font-weight: 500; height: 40px; padding: 0 23px; border-radius: 3px; }
+.footer-name { font: 36px var(--font-script); margin-bottom: 10px; }
+.footer-note { font-size: 10.5px; letter-spacing: 2px; text-transform: uppercase; color: var(--muted-foreground); }
+.wedding-cta { font-size: 13px; font-weight: 600; height: 44px; padding: 0 24px; border-radius: 4px; display: inline-flex; align-items: center; justify-content: center; gap: 8px; }
 .lookup-form { display: flex; gap: 8px; max-width: 460px; margin: 22px auto 0; }
-.lookup-input { width: 100%; min-width: 0; border: 1px solid var(--border); background: var(--paper); border-radius: 3px; padding: 10px 12px; font-size: 11px; color: var(--foreground); }
-.error-copy { color: var(--destructive); font-size: 12px; margin-top: 12px; }
+.lookup-input { width: 100%; min-width: 0; border: 1px solid var(--border); background: var(--paper); border-radius: 4px; padding: 12px 14px; font-size: 14px; color: var(--foreground); }
+.error-copy { color: var(--destructive); font-size: 13px; margin-top: 12px; }
 @keyframes arrive { from { opacity: 0; transform: translateY(18px); } to { opacity: 1; transform: translateY(0); } }
 @keyframes drift { 50% { transform: translateY(5px); } }
 @media (min-width: 1500px) { .wedding-hero { min-height: 730px; } }
-@media (max-width: 700px) {
- .wedding-nav { height: 62px; padding: 0 22px; }.nav-links { gap: 16px; }.nav-links > a:not(.wedding-cta) { display: none; }
+@media (max-width: 860px) {
+ .wedding-nav { height: 62px; padding: 0 22px; }.nav-links { gap: 16px; font-size: 13px; }.nav-links > a:not(.wedding-cta) { display: none; }
  .wedding-hero { min-height: 665px; padding-top: 38px; }.hero-botanical-left { width: 205px; height: 620px; left: -120px; top: -25px; opacity: .45; }.hero-botanical-right { width: 205px; height: 620px; right: -120px; top: 0; opacity: .45; }
- .couple-title { font-size: 49px; }.couple-title .ampersand { font-size: 37px; }.couple-title .second-name { display: block; }.envelope-scene { width: min(310px, 88%); height: 198px; }.hero-caption { max-width: 260px; margin: 14px auto 26px; line-height: 1.8; }.eyebrow { font-size: 8px; letter-spacing: 2px; }
- .intro-band { padding: 46px 25px; }.section-title { font-size: 35px; }.section-wrap { padding: 50px 25px; }.date-grid, .dress-grid, .location-grid { grid-template-columns: 1fr; gap: 38px; }.date-grid > div:last-child { text-align: center; }.countdown { justify-content: center; gap: 16px; }.timeline { gap: 10px; }.timeline-time { font-size: 26px; }.timeline-name { font-size: 10px; }.timeline-detail { line-height: 1.8; }.programme-band { padding: 48px 15px 58px; }.dress-grid { text-align: center; }.dress-swatches { justify-content: center; }.quote { font-size: 24px; }.rsvp-frame { height: 670px; }.contact-links { gap: 10px; }.lookup-form { flex-direction: column; }
+ .couple-title { font-size: 49px; }.couple-title .ampersand { font-size: 37px; }.couple-title .second-name { display: block; }.envelope-scene { width: min(310px, 88%); height: 198px; }.hero-caption { max-width: 290px; margin: 14px auto 26px; line-height: 1.7; font-size: 13.5px; }.eyebrow { font-size: 10.5px; letter-spacing: 2px; }
+ .intro-band { padding: 48px 20px; }.intro-text { font-size: 15px; line-height: 1.8; }.section-title { font-size: 34px; }.section-wrap { padding: 52px 20px; }.date-grid, .dress-grid, .location-grid { grid-template-columns: 1fr; gap: 38px; }.date-grid > div:last-child { text-align: center; }.countdown { justify-content: center; gap: 14px; }.count-unit { min-width: 48px; }.count-number { font-size: 32px; }.count-label { font-size: 9.5px; }.body-copy { font-size: 14px; line-height: 1.75; }
+ .programme-band { padding: 52px 18px 68px; }
+ .timeline { display: flex; flex-direction: column; gap: 28px; max-width: 480px; margin: 38px auto 0; padding-left: 14px; padding-right: 14px; position: relative; }
+ .timeline:before { left: 39px; right: auto; top: 26px; bottom: 26px; width: 2px; height: auto; background: rgba(255, 255, 255, 0.35); }
+ .timeline-item { display: flex; flex-direction: row; align-items: flex-start; text-align: left; gap: 18px; padding: 0; }
+ .timeline-icon { width: 50px; height: 50px; flex-shrink: 0; margin: 0; border-width: 2px; }
+ .timeline-content { flex: 1; min-width: 0; padding-top: 2px; }
+ .timeline-time { font-size: 24px; margin-bottom: 4px; }
+ .timeline-name { font-size: 16.5px; margin-bottom: 6px; }
+ .timeline-detail { font-size: 14px; line-height: 1.6; margin-top: 4px; }
+ .timeline-badge { margin-top: 8px; font-size: 10.5px; }
+ .location-item h3 { font-size: 24px; }.location-item .body-copy { min-height: auto; }
+ .gift-band { padding: 52px 18px; }.gift-grid { grid-template-columns: 1fr; gap: 16px; }
+ .dress-grid { text-align: center; }.dress-swatches { justify-content: center; }.quote { font-size: 22px; }.quote-source { font-size: 10.5px; }.rsvp-frame { height: 670px; }.contact-links { gap: 12px; }.lookup-form { flex-direction: column; }
 }
 @media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } *, *:before, *:after { animation: none !important; transition: none !important; } }
 .rsvp-form { display: grid; gap: 14px; max-width: 460px; margin: 26px auto 0; text-align: left; }

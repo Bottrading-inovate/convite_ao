@@ -172,7 +172,7 @@ function PassePortariaPage() {
               </div>
               <div className="passe-detail-row">
                 <MapPin size={15} className="text-primary" />
-                <span>Copo-d'água às 19h30 • Salão de Festas "Detalhe Precioso"</span>
+                <span>Início às 11h00 (Salão do Reino) • Copo-d'água às 19h30 ("Detalhe Precioso")</span>
               </div>
             </div>
           </article>

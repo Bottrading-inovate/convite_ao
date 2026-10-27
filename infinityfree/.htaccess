@@ -1,0 +1,11 @@
+# Rewrite de URLs para o InfinityFree
+# Garante que /convite/TOKEN e /passe/TOKEN passem pelo index.php
+RewriteEngine On
+RewriteBase /
+
+# Não redirecionar se o ficheiro físico ou directório existir
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+
+# Encaminha todo o tráfego para o index.php
+RewriteRule ^(.*)$ index.php [QSA,L]

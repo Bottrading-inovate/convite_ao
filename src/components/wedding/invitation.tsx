@@ -25,6 +25,9 @@ import {
   Lock,
   UtensilsCrossed,
   Eye,
+  Coffee,
+  Gift,
+  MessageSquare,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import botanicals from '@/assets/wedding-botanicals.png';
@@ -36,6 +39,9 @@ import {
   receptionUrl,
   churchUrl,
   weddingPhones,
+  officialSchedule,
+  buildPasseUrl,
+  weddingGifts,
 } from '@/lib/wedding';
 import { RsvpForm } from './rsvp-form';
 import { lookupInvitation, confirmPersonalRsvp } from '@/lib/invitations.functions';
@@ -48,11 +54,11 @@ function addToCalendar() {
     'BEGIN:VEVENT',
     'UID:junior-hermenegilda-20261212',
     'DTSTAMP:20261015T100000Z',
-    'DTSTART:20261212T123000Z',
-    'DTEND:20261212T223000Z',
+    'DTSTART:20261212T100000Z',
+    'DTEND:20261212T230000Z',
     'SUMMARY:Casamento de Júnior e Hermenegilda',
-    'LOCATION:Salão do Reino das Testemunhas de Jeová, Sonho da Casa Própria',
-    'DESCRIPTION:Cerimónia civil 13h30. Cerimónia religiosa 14h30. Copo-d’água 19h30 no Detalhe Precioso.',
+    'LOCATION:Salão do Reino das Testemunhas de Jeová, Sonho da Casa Própria / Salão Detalhe Precioso',
+    'DESCRIPTION:11h00 Cerimónia de Casamento Civil. 12h45 Discurso Bíblico de Casamento. 13h30 Coffee Break. 19h30 Copo-d’água (A Boda) no Salão Detalhe Precioso.',
     'END:VEVENT',
     'END:VCALENDAR',
   ].join('\r\n');
@@ -119,7 +125,7 @@ export function WeddingInvitation({
     const tick = () => setCountdown(countdownToWedding(Date.now()));
     tick();
     const interval = window.setInterval(tick, 1000);
-    if (token) setInviteUrl(`${window.location.origin}/passe/${token}`);
+    if (token) setInviteUrl(buildPasseUrl(token, typeof window !== 'undefined' ? window.location.origin : undefined));
     return () => window.clearInterval(interval);
   }, [token]);
 
@@ -396,6 +402,7 @@ export function WeddingInvitation({
         </section>
 
         {/* PROGRAMAÇÃO CONFORME O MODELO PDF */}
+        {/* PROGRAMAÇÃO CONFORME O MODELO OFICIAL */}
         <section id="programacao" className="programme-band">
           <p className="eyebrow">PROGRAMAÇÃO OFICIAL</p>
           <h2 className="section-title">O nosso grande dia</h2>
@@ -403,30 +410,43 @@ export function WeddingInvitation({
             {[
               {
                 icon: Heart,
-                time: '13h30',
-                name: 'Cerimónia civil',
-                detail: 'Salão do Reino das Testemunhas de Jeová',
+                time: '11:00 – 12:30',
+                name: 'Cerimónia de Casamento Civil',
+                detail: 'Conservatória / Celebração formal e assinatura perante a família',
+                badge: 'Salão do Reino',
               },
               {
                 icon: Church,
-                time: '14h30',
-                name: 'Cerimónia religiosa',
-                detail: 'Com a bênção de Jeová',
+                time: '12:45 – 13:30',
+                name: 'Discurso Bíblico de Casamento',
+                detail: 'Salão do Reino das Testemunhas de Jeová (Com a bênção de Jeová)',
+                badge: 'Salão do Reino',
+              },
+              {
+                icon: Coffee,
+                time: '13:30 – 14:45',
+                name: 'Coffee Break',
+                detail: 'Confraternização e carinho no Salão do Reino',
+                badge: 'Salão do Reino',
               },
               {
                 icon: Wine,
-                time: '19h30',
-                name: 'Copo-d’água',
+                time: '19:30',
+                name: 'Copo-d’água (A Boda)',
                 detail: 'Salão de Festas “Detalhe Precioso”',
+                badge: 'Detalhe Precioso',
               },
             ].map(item => (
               <div className="timeline-item" key={item.time}>
                 <div className="timeline-icon">
-                  <item.icon size={20} />
+                  <item.icon size={22} />
                 </div>
-                <div className="timeline-time">{item.time}</div>
-                <div className="timeline-name">{item.name}</div>
-                <p className="timeline-detail">{item.detail}</p>
+                <div className="timeline-content">
+                  <div className="timeline-time">{item.time}</div>
+                  <div className="timeline-name">{item.name}</div>
+                  <p className="timeline-detail">{item.detail}</p>
+                  <span className="timeline-badge">{item.badge}</span>
+                </div>
               </div>
             ))}
           </div>
@@ -439,10 +459,10 @@ export function WeddingInvitation({
           <div className="location-grid">
             <article className="location-item">
               <Church size={24} />
-              <p className="eyebrow mt-4">13h30 · 14h30 — Cerimónias</p>
+              <p className="eyebrow mt-4">11h00 às 14h45 — Cerimónias & Coffee Break</p>
               <h3>Salão do Reino</h3>
               <p className="body-copy">
-                As cerimónias serão realizadas no Salão do Reino das Testemunhas de Jeová.
+                As cerimónias (Civil, Discurso Bíblico e o Coffee Break) serão realizadas no Salão do Reino das Testemunhas de Jeová.
                 <br />
                 <strong>Localização:</strong> Sonho da casa própria, junto ao colégio dos marotos.
               </p>
@@ -455,10 +475,10 @@ export function WeddingInvitation({
 
             <article className="location-item">
               <Wine size={24} />
-              <p className="eyebrow mt-4">19h30 — Copo-d’água</p>
+              <p className="eyebrow mt-4">19h30 — Copo-d’água (A Boda)</p>
               <h3>Detalhe Precioso</h3>
               <p className="body-copy">
-                O Copo D’água será realizado no Salão de Festas “Detalhe Precioso”.
+                O Copo D’água (A Boda) será celebrado no Salão de Festas “Detalhe Precioso”.
                 <br />
                 <strong>Localização:</strong> Via Expressa sentido Kilamba–Zango na rua principal do Kixuxi Shopping.
               </p>
@@ -693,53 +713,93 @@ export function WeddingInvitation({
         <section id="presente" className="gift-band">
           <HandCoins className="little-flower mx-auto" size={24} aria-hidden="true" />
           <p className="eyebrow">UM GESTO DE CARINHO</p>
-          <h2 className="section-title">Como pode ajudar?</h2>
-          <p className="intro-text">
-            Se desejarem oferecer-nos um presente, podem contribuir através dos dados bancários abaixo. Toca no cartão
-            para copiar o IBAN.
+          <h2 className="section-title">Abençoar o nosso novo lar</h2>
+          <p className="intro-text max-w-xl mx-auto">
+            A vossa presença é a nossa maior bênção e alegria! Se desejarem presentear os noivos ou contribuir
+            com um gesto de carinho para o início do nosso lar e lua de mel, preparamos com amor as opções abaixo.
+            Toca em qualquer cartão para copiar os dados.
           </p>
+
+          {/* SUGESTÕES CARINHOSAS / COTAS AFETIVAS */}
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 max-w-3xl mx-auto my-6 text-center">
+            <div className="p-3.5 rounded-lg border border-border bg-white/70 shadow-xs flex flex-col items-center">
+              <Coffee size={22} className="text-primary mb-1.5" />
+              <span className="text-xs font-semibold text-primary">Pequeno-almoço</span>
+              <span className="text-[11px] text-muted-foreground mt-0.5">Mimo na Lua de Mel</span>
+            </div>
+            <div className="p-3.5 rounded-lg border border-border bg-white/70 shadow-xs flex flex-col items-center">
+              <Heart size={22} className="text-primary mb-1.5" />
+              <span className="text-xs font-semibold text-primary">Novo Lar</span>
+              <span className="text-[11px] text-muted-foreground mt-0.5">Detalhe para a casa</span>
+            </div>
+            <div className="p-3.5 rounded-lg border border-border bg-white/70 shadow-xs flex flex-col items-center">
+              <Wine size={22} className="text-primary mb-1.5" />
+              <span className="text-xs font-semibold text-primary">Jantar Romântico</span>
+              <span className="text-[11px] text-muted-foreground mt-0.5">Celebração a dois</span>
+            </div>
+            <div className="p-3.5 rounded-lg border border-border bg-white/70 shadow-xs flex flex-col items-center">
+              <Gift size={22} className="text-primary mb-1.5" />
+              <span className="text-xs font-semibold text-primary">Cota Livre</span>
+              <span className="text-[11px] text-muted-foreground mt-0.5">Qualquer valor de amor</span>
+            </div>
+          </div>
+
           <div className="gift-grid">
             <button
               type="button"
+              className={`gift-card ${copied === 'express' ? 'copied' : ''}`}
+              onClick={() => copyGift(weddingGifts.expressNumber, 'express')}
+              aria-label="Copiar o número Multicaixa Express"
+            >
+              <span className="gift-label font-semibold text-primary">★ Multicaixa Express (Recomendado)</span>
+              <span className="gift-value text-lg font-bold">{weddingGifts.expressDisplay}</span>
+              <span className="gift-hint">
+                {copied === 'express' ? <><Check size={14} /> Número copiado!</> : <><Copy size={14} /> Toca para copiar o telemóvel</>}
+              </span>
+            </button>
+
+            <button
+              type="button"
               className={`gift-card ${copied === 'noivo' ? 'copied' : ''}`}
-              onClick={() => copyGift('004000003705242910182', 'noivo')}
+              onClick={() => copyGift(weddingGifts.groomIban, 'noivo')}
               aria-label="Copiar o IBAN do noivo"
             >
-              <span className="gift-label">IBAN do Noivo</span>
-              <span className="gift-value">004000003705242910182</span>
+              <span className="gift-label">IBAN do Noivo ({weddingGifts.groomName})</span>
+              <span className="gift-value">{weddingGifts.groomIban}</span>
               <span className="gift-hint">
-                {copied === 'noivo' ? <><Check size={14} /> Copiado!</> : <><Copy size={14} /> Toque para copiar</>}
+                {copied === 'noivo' ? <><Check size={14} /> IBAN copiado!</> : <><Copy size={14} /> Toca para copiar o IBAN</>}
               </span>
             </button>
 
             <button
               type="button"
               className={`gift-card ${copied === 'noiva' ? 'copied' : ''}`}
-              onClick={() => copyGift('000500006994136610197', 'noiva')}
+              onClick={() => copyGift(weddingGifts.brideIban, 'noiva')}
               aria-label="Copiar o IBAN da noiva"
             >
-              <span className="gift-label">IBAN da Noiva</span>
-              <span className="gift-value">000500006994136610197</span>
+              <span className="gift-label">IBAN da Noiva ({weddingGifts.brideName})</span>
+              <span className="gift-value">{weddingGifts.brideIban}</span>
               <span className="gift-hint">
-                {copied === 'noiva' ? <><Check size={14} /> Copiado!</> : <><Copy size={14} /> Toque para copiar</>}
-              </span>
-            </button>
-
-            <button
-              type="button"
-              className={`gift-card ${copied === 'express' ? 'copied' : ''}`}
-              onClick={() => copyGift('932946648', 'express')}
-              aria-label="Copiar o número Express"
-            >
-              <span className="gift-label">Multicaixa Express</span>
-              <span className="gift-value">932 946 648</span>
-              <span className="gift-hint">
-                {copied === 'express' ? <><Check size={14} /> Copiado!</> : <><Copy size={14} /> Toque para copiar</>}
+                {copied === 'noiva' ? <><Check size={14} /> IBAN copiado!</> : <><Copy size={14} /> Toca para copiar o IBAN</>}
               </span>
             </button>
           </div>
-          <p className="gift-thanks">
-            A vossa presença e o vosso carinho significam muito para nós.
+
+          {/* BOTÃO PARA ENVIAR COMPROVATIVO / MENSAGEM */}
+          <div className="mt-6 flex justify-center">
+            <Button variant="outline" className="wedding-cta gap-2 text-xs" asChild>
+              <a
+                href={`https://wa.me/${weddingGifts.whatsappProofPhone}?text=${encodeURIComponent('Olá Júnior e Hermenegilda! Fiz uma contribuição com todo o carinho para o vosso casamento. Muitas felicidades e que Jeová vos abençoe!')}`}
+                target="_blank"
+                rel="noreferrer"
+              >
+                <MessageSquare size={16} /> Enviar comprovativo ou mensagem aos noivos
+              </a>
+            </Button>
+          </div>
+
+          <p className="gift-thanks mt-6">
+            A vossa presença e o vosso carinho significam tudo para nós.
             <br />
             Estamos ansiosos para celebrar este dia inesquecível ao vosso lado.
             <br />

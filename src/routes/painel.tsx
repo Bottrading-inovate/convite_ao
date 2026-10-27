@@ -15,6 +15,7 @@ import {
   type GuestRow,
   type DashboardStats,
 } from '@/lib/invitations.functions';
+import { buildInviteUrl, buildPasseUrl, publicDomain } from '@/lib/wedding';
 import {
   CheckCircle2,
   Clock,
@@ -40,6 +41,10 @@ import {
   X,
   UtensilsCrossed,
   Sparkles,
+  Globe,
+  CheckCheck,
+  Play,
+  FileSpreadsheet,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
@@ -164,6 +169,37 @@ function AdminPanelPage() {
   const [singleName, setSingleName] = useState('');
   const [singlePhone, setSinglePhone] = useState('');
   const [singlePartySize, setSinglePartySize] = useState<number>(2);
+
+  // Máscara e Envio Automatizado WhatsApp
+  const [useMaskedDomain, setUseMaskedDomain] = useState(true);
+  const [sentTokens, setSentTokens] = useState<string[]>(() => {
+    if (typeof window === 'undefined') return [];
+    try {
+      const saved = localStorage.getItem('wedding_sent_tokens');
+      return saved ? JSON.parse(saved) : [];
+    } catch {
+      return [];
+    }
+  });
+  const [batchModalOpen, setBatchModalOpen] = useState(false);
+  const [batchIndex, setBatchIndex] = useState(0);
+
+  function markAsSent(token: string) {
+    setSentTokens(prev => {
+      if (prev.includes(token)) return prev;
+      const next = [...prev, token];
+      try { localStorage.setItem('wedding_sent_tokens', JSON.stringify(next)); } catch { /* ignore */ }
+      return next;
+    });
+  }
+
+  function unmarkAsSent(token: string) {
+    setSentTokens(prev => {
+      const next = prev.filter(t => t !== token);
+      try { localStorage.setItem('wedding_sent_tokens', JSON.stringify(next)); } catch { /* ignore */ }
+      return next;
+    });
+  }
 
   // Alterar palavra-passe
   const [showPasswordPanel, setShowPasswordPanel] = useState(false);
@@ -380,11 +416,11 @@ function AdminPanelPage() {
   }
 
   function inviteLink(token: string) {
-    return `${typeof window !== 'undefined' ? window.location.origin : ''}/convite/${token}`;
+    return buildInviteUrl(token, useMaskedDomain ? publicDomain : (typeof window !== 'undefined' ? window.location.origin : undefined));
   }
 
   function passeLink(token: string) {
-    return `${typeof window !== 'undefined' ? window.location.origin : ''}/passe/${token}`;
+    return buildPasseUrl(token, useMaskedDomain ? publicDomain : (typeof window !== 'undefined' ? window.location.origin : undefined));
   }
 
   async function copyInviteLink(token: string) {
@@ -400,7 +436,8 @@ function AdminPanelPage() {
         ? `Olá ${guest.name}! Ficámos muito felizes com a vossa confirmação para o nosso casamento, a 12 de dezembro de 2026.\n\nO vosso convite digital, com o código QR de entrada, está aqui:\n${link}`
         : `Olá ${guest.name}! Com a bênção de Jeová e de nossos pais, nós, Júnior & Hermenegilda, temos a honra de vos convidar para o nosso casamento, no dia 12 de dezembro de 2026.\n\nO vosso convite pessoal está aqui:\n${link}\n\nPedimos que confirmem a presença no próprio convite. Por favor, não levem crianças.`;
     const digits = (guest.phone || '').replace(/\D/g, '');
-    return `https://wa.me/${digits}?text=${encodeURIComponent(text)}`;
+    const cleanDigits = digits.length === 9 ? `244${digits}` : digits;
+    return `https://wa.me/${cleanDigits}?text=${encodeURIComponent(text)}`;
   }
 
   function downloadCsv() {
@@ -425,6 +462,32 @@ function AdminPanelPage() {
     a.click();
     URL.revokeObjectURL(url);
   }
+
+  function downloadBulkWhatsappCsv() {
+    const q = (v: string) => `"${v.replace(/"/g, '""')}"`;
+    const header = ['Telefone', 'Nome', 'LinkConvite', 'MensagemPronta'];
+    const validGuests = guests.filter(g => (g.phone || '').replace(/\D/g, '').length >= 9);
+    const rows = validGuests.map(g => {
+      const digits = (g.phone || '').replace(/\D/g, '');
+      const fullPhone = digits.length === 9 ? `244${digits}` : digits;
+      const link = inviteLink(g.token);
+      const text = g.attending === true
+        ? `Olá ${g.name}! Ficámos muito felizes com a vossa confirmação para o nosso casamento, a 12 de dezembro de 2026. O vosso convite digital com passe de entrada está aqui: ${link}`
+        : `Olá ${g.name}! Com a bênção de Jeová e de nossos pais, nós, Júnior & Hermenegilda, convidamo-vos para o nosso casamento no dia 12 de dezembro de 2026. O vosso convite pessoal: ${link} (Favor confirmar no link. Não levar crianças).`;
+      return [fullPhone, q(g.name), q(link), q(text)];
+    });
+    const csv = '\uFEFF' + [header.join(';'), ...rows.map(r => r.join(';'))].join('\n');
+    const url = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8;' }));
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `whatsapp-disparo-em-massa-${new Date().toISOString().slice(0, 10)}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+  }
+
+  const batchGuests = useMemo(() => {
+    return guests.filter(g => (g.phone || '').replace(/\D/g, '').length >= 9);
+  }, [guests]);
 
   const existingTables = useMemo(() => {
     const set = new Set<string>();
@@ -690,9 +753,55 @@ function AdminPanelPage() {
           >
             <Plus size={16} /> Emitir convites
           </button>
-          <Button variant="outline" size="sm" className="admin-tabs-action" onClick={downloadCsv} disabled={guests.length === 0}>
-            <Download /> <span className="admin-hide-sm">Exportar</span> CSV
-          </Button>
+
+          <div className="flex gap-2 flex-wrap items-center ml-auto">
+            <Button
+              variant="outline"
+              size="sm"
+              className="admin-tabs-action bg-emerald-50 text-emerald-800 border-emerald-300 hover:bg-emerald-100"
+              onClick={() => {
+                setBatchIndex(0);
+                setBatchModalOpen(true);
+              }}
+              disabled={batchGuests.length === 0}
+              title="Disparo guiado para WhatsApp de forma semi-automática e rápida"
+            >
+              <Play size={14} className="text-emerald-700" />
+              <span className="font-semibold">Fila Rápida WhatsApp</span> ({sentTokens.length}/{batchGuests.length})
+            </Button>
+
+            <Button
+              variant="outline"
+              size="sm"
+              className="admin-tabs-action"
+              onClick={downloadBulkWhatsappCsv}
+              disabled={batchGuests.length === 0}
+              title="Descarregar ficheiro compatível com ferramentas automáticas de envio em massa"
+            >
+              <FileSpreadsheet size={14} /> CSV p/ Disparador WhatsApp
+            </Button>
+
+            <Button variant="outline" size="sm" className="admin-tabs-action" onClick={downloadCsv} disabled={guests.length === 0}>
+              <Download size={14} /> <span className="admin-hide-sm">Exportar</span> CSV Geral
+            </Button>
+          </div>
+        </div>
+
+        {/* CONTROLO VISUAL DA MÁSCARA DO DOMÍNIO */}
+        <div className="flex items-center justify-between text-xs bg-muted/40 px-3.5 py-2 rounded-md border border-border my-3 flex-wrap gap-2">
+          <div className="flex items-center gap-2">
+            <Globe size={14} className="text-primary" />
+            <span>Domínio nos Links & QR Codes:</span>
+            <strong className="text-primary">{useMaskedDomain ? publicDomain : (typeof window !== 'undefined' ? window.location.origin : publicDomain)}</strong>
+            {useMaskedDomain && <span className="text-[11px] text-green-700 font-medium bg-green-100 px-1.5 py-0.5 rounded">Máscara Ativa</span>}
+          </div>
+          <button
+            type="button"
+            onClick={() => setUseMaskedDomain(v => !v)}
+            className="text-xs text-primary underline hover:opacity-80 cursor-pointer"
+          >
+            {useMaskedDomain ? 'Usar link direto Cloudflare' : 'Usar link mascarado (nossocasamento.gt.tc)'}
+          </button>
         </div>
 
         {activeTab === 'guests' && (
@@ -765,6 +874,15 @@ function AdminPanelPage() {
                         {g.attending === true && <span className="admin-status is-confirmed"><CheckCircle2 size={12} /> Confirmado</span>}
                         {g.attending === false && <span className="admin-status is-declined"><XCircle size={12} /> Não vai</span>}
                         {g.attending === null && <span className="admin-status is-pending"><Clock size={12} /> Aguarda resposta</span>}
+                        {sentTokens.includes(g.token) && (
+                          <span
+                            className="admin-status is-confirmed bg-emerald-50 text-emerald-800 border-emerald-300 cursor-pointer"
+                            title="Clique para desmarcar envio"
+                            onClick={() => unmarkAsSent(g.token)}
+                          >
+                            <CheckCheck size={12} /> Enviado
+                          </span>
+                        )}
                       </div>
                       <div className="admin-guest-meta">
                         <span className={g.phone ? '' : 'is-muted'}>
@@ -787,7 +905,14 @@ function AdminPanelPage() {
                         <span>{g.tableName ? g.tableName : 'Mesa'}</span>
                       </Button>
 
-                      <a href={whatsAppUrl(g)} target="_blank" rel="noreferrer" className="admin-whatsapp">
+                      <a
+                        href={whatsAppUrl(g)}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="admin-whatsapp"
+                        onClick={() => markAsSent(g.token)}
+                        title="Abrir WhatsApp e marcar como enviado"
+                      >
                         <MessageCircle size={15} /> WhatsApp
                       </a>
                       <Button variant="outline" size="sm" onClick={() => copyInviteLink(g.token)}>
@@ -1114,6 +1239,131 @@ function AdminPanelPage() {
                 Guardar Mesa
               </Button>
             </div>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* DIÁLOGO DA FILA RÁPIDA DE DISPARO WHATSAPP */}
+      <Dialog open={batchModalOpen} onOpenChange={setBatchModalOpen}>
+        <DialogContent className="sm:max-w-md max-w-[95vw] bg-white border border-border">
+          <DialogHeader>
+            <DialogTitle className="font-serif text-xl flex items-center gap-2 text-primary">
+              <Play size={18} className="text-emerald-600" /> Fila Rápida de Envio WhatsApp
+            </DialogTitle>
+            <DialogDescription className="text-xs">
+              Envia os convites um a um no WhatsApp com 1 clique, sem copiar nem colar nada manualmente.
+            </DialogDescription>
+          </DialogHeader>
+
+          {batchGuests.length === 0 ? (
+            <p className="text-sm text-muted-foreground py-4 text-center">Nenhum convidado tem número de telemóvel registado.</p>
+          ) : (
+            (() => {
+              const currentG = batchGuests[batchIndex] || batchGuests[0];
+              const isSent = currentG ? sentTokens.includes(currentG.token) : false;
+              const link = currentG ? inviteLink(currentG.token) : '';
+
+              return (
+                <div className="space-y-4 py-2">
+                  <div className="flex justify-between items-center text-xs text-muted-foreground border-b border-border pb-2">
+                    <span>Convidado <strong>{batchIndex + 1}</strong> de <strong>{batchGuests.length}</strong></span>
+                    <span className="bg-secondary px-2 py-0.5 rounded text-[11px] font-medium">
+                      Enviados: {sentTokens.length}/{batchGuests.length}
+                    </span>
+                  </div>
+
+                  <div className="p-3.5 bg-secondary/40 rounded-lg border border-border space-y-2">
+                    <div className="flex justify-between items-start gap-2">
+                      <div>
+                        <h4 className="font-serif text-lg font-bold text-foreground">{currentG.name}</h4>
+                        <p className="text-xs text-primary font-medium flex items-center gap-1 mt-0.5">
+                          <Phone size={12} /> {currentG.phone} ({currentG.partySize} {currentG.partySize === 1 ? 'lugar' : 'lugares'})
+                        </p>
+                      </div>
+                      {isSent ? (
+                        <span className="text-[11px] bg-emerald-100 text-emerald-800 font-semibold px-2 py-0.5 rounded flex items-center gap-1">
+                          <CheckCheck size={12} /> Já enviado
+                        </span>
+                      ) : (
+                        <span className="text-[11px] bg-amber-100 text-amber-800 font-semibold px-2 py-0.5 rounded">
+                          Pendente
+                        </span>
+                      )}
+                    </div>
+
+                    <div className="text-xs bg-white p-2.5 rounded border border-border/80 text-foreground/80 mt-2">
+                      <span className="text-[10px] text-muted-foreground uppercase font-bold block mb-1">Ligação formatada:</span>
+                      <a href={link} target="_blank" rel="noreferrer" className="text-primary underline font-mono text-[11px] break-all">
+                        {link}
+                      </a>
+                    </div>
+                  </div>
+
+                  <div className="flex flex-col gap-2 pt-2">
+                    <Button
+                      type="button"
+                      className="w-full wedding-cta bg-emerald-700 hover:bg-emerald-800 text-white gap-2 h-11"
+                      onClick={() => {
+                        markAsSent(currentG.token);
+                        window.open(whatsAppUrl(currentG), '_blank');
+                        if (batchIndex < batchGuests.length - 1) {
+                          setBatchIndex(i => i + 1);
+                        }
+                      }}
+                    >
+                      <MessageCircle size={18} />
+                      <span>Abrir no WhatsApp e Avançar</span>
+                    </Button>
+
+                    <div className="flex gap-2">
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        className="flex-1 text-xs"
+                        disabled={batchIndex === 0}
+                        onClick={() => setBatchIndex(i => Math.max(0, i - 1))}
+                      >
+                        Anterior
+                      </Button>
+
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        className="flex-1 text-xs"
+                        onClick={() => {
+                          if (isSent) {
+                            unmarkAsSent(currentG.token);
+                          } else {
+                            markAsSent(currentG.token);
+                          }
+                        }}
+                      >
+                        {isSent ? 'Desmarcar envio' : 'Marcar já enviado'}
+                      </Button>
+
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        className="flex-1 text-xs"
+                        disabled={batchIndex >= batchGuests.length - 1}
+                        onClick={() => setBatchIndex(i => Math.min(batchGuests.length - 1, i + 1))}
+                      >
+                        Próximo
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+              );
+            })()
+          )}
+
+          <DialogFooter className="pt-2 border-t border-border flex justify-end">
+            <Button type="button" variant="outline" size="sm" onClick={() => setBatchModalOpen(false)}>
+              Fechar Fila
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

@@ -12,7 +12,8 @@
     "format": "prettier --write .",
     "test": "vitest run",
     "test:watch": "vitest",
-    "invites:generate": "tsx scripts/generate-invitations.ts"
+    "invites:generate": "tsx scripts/generate-invitations.ts",
+    "invites:whatsapp": "tsx scripts/send-whatsapp-batch.ts"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.2.2",
