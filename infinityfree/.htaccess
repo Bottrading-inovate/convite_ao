@@ -1,11 +1,13 @@
-# Rewrite de URLs para o InfinityFree
-# Garante que /convite/TOKEN e /passe/TOKEN passem pelo index.php
+# Configuração de rotas para o InfinityFree
+# Evita que o InfinityFree envie para errors.infinityfree.net/errors/404/
+ErrorDocument 404 /index.php
+
 RewriteEngine On
 RewriteBase /
 
-# Não redirecionar se o ficheiro físico ou directório existir
+# Se o ficheiro ou pasta real existir, carrega directamente
 RewriteCond %{REQUEST_FILENAME} !-f
 RewriteCond %{REQUEST_FILENAME} !-d
 
-# Encaminha todo o tráfego para o index.php
+# Encaminha todo o resto para o index.php mantendo o caminho /convite/TOKEN
 RewriteRule ^(.*)$ index.php [QSA,L]

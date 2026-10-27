@@ -5,20 +5,22 @@
  * Destino Cloudflare Worker: https://convite-ao.botcatrading.workers.dev
  */
 
+http_response_code(200);
+header("HTTP/1.1 200 OK");
+
 $workerBase = 'https://convite-ao.botcatrading.workers.dev';
-$requestUri = $_SERVER['REQUEST_URI'] ?? '/';
+$requestUri = $_SERVER['REDIRECT_URL'] ?? $_SERVER['REQUEST_URI'] ?? '/';
+$cleanPath = ltrim($requestUri, '/');
+$targetUrl = rtrim($workerBase, '/') . '/' . $cleanPath;
 
-// Limpa possíveis duplicações de barras
-$targetUrl = rtrim($workerBase, '/') . '/' . ltrim($requestUri, '/');
+if (!empty($_SERVER['QUERY_STRING']) && strpos($targetUrl, '?') === false) {
+    $targetUrl .= '?' . $_SERVER['QUERY_STRING'];
+}
 
-// Modo Redirecionamento Direto (caso queira redirecionar em vez de mascarar)
 if (isset($_GET['direct'])) {
     header("Location: " . $targetUrl, true, 302);
     exit();
 }
-
-// Modo Máscara Completa (Iframe responsivo de ecrã total)
-// Mantém https://nossocasamento.gt.tc visível na barra de navegação!
 ?>
 <!DOCTYPE html>
 <html lang="pt-AO">
@@ -26,33 +28,21 @@ if (isset($_GET['direct'])) {
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Casamento de Júnior & Hermenegilda</title>
-  <meta name="description" content="Celebração do casamento de Júnior e Hermenegilda em 12 de dezembro de 2026.">
+  <meta name="description" content="Convite oficial para o casamento de Júnior e Hermenegilda em 12 de Dezembro de 2026.">
   <meta property="og:title" content="Casamento Júnior & Hermenegilda">
   <meta property="og:description" content="Contamos contigo para celebrar o nosso amor.">
   <meta property="og:type" content="website">
   <meta name="robots" content="noindex, nofollow">
   <style>
-    html, body {
-      margin: 0;
-      padding: 0;
-      width: 100%;
-      height: 100%;
-      overflow: hidden;
-      background-color: #faf8f5;
-    }
-    iframe {
-      width: 100%;
-      height: 100%;
-      border: 0;
-      outline: 0;
-      display: block;
-    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body { width: 100%; height: 100%; overflow: hidden; background-color: #274533; }
+    iframe { position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: 0; outline: 0; display: block; }
   </style>
 </head>
 <body>
   <iframe
     src="<?= htmlspecialchars($targetUrl, ENT_QUOTES, 'UTF-8') ?>"
-    title="Convite de Casamento Júnior e Hermenegilda"
+    title="Convite de Casamento Júnior & Hermenegilda"
     allow="clipboard-write; fullscreen"
   ></iframe>
 </body>
