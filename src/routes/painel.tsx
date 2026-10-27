@@ -725,40 +725,43 @@ function AdminPanelPage() {
           </section>
         )}
 
-        <div className="admin-tabs" role="tablist" aria-label="Secções do painel">
-          <button
-            type="button"
-            role="tab"
-            aria-selected={activeTab === 'guests'}
-            className="admin-tab"
-            onClick={() => setActiveTab('guests')}
-          >
-            <Users size={16} /> Convidados <span className="admin-tab-count">{guests.length}</span>
-          </button>
-          <button
-            type="button"
-            role="tab"
-            aria-selected={activeTab === 'tables'}
-            className="admin-tab"
-            onClick={() => setActiveTab('tables')}
-          >
-            <UtensilsCrossed size={16} /> Mesas <span className="admin-tab-count">{existingTables.length}</span>
-          </button>
-          <button
-            type="button"
-            role="tab"
-            aria-selected={activeTab === 'create'}
-            className="admin-tab"
-            onClick={() => setActiveTab('create')}
-          >
-            <Plus size={16} /> Emitir convites
-          </button>
+        {/* NAVEGAÇÃO POR ABAS E AÇÕES DE DISPARO */}
+        <div className="admin-tabs-section">
+          <div className="admin-tabs" role="tablist" aria-label="Secções do painel">
+            <button
+              type="button"
+              role="tab"
+              aria-selected={activeTab === 'guests'}
+              className="admin-tab"
+              onClick={() => setActiveTab('guests')}
+            >
+              <Users size={16} /> Convidados <span className="admin-tab-count">{guests.length}</span>
+            </button>
+            <button
+              type="button"
+              role="tab"
+              aria-selected={activeTab === 'tables'}
+              className="admin-tab"
+              onClick={() => setActiveTab('tables')}
+            >
+              <UtensilsCrossed size={16} /> Mesas <span className="admin-tab-count">{existingTables.length}</span>
+            </button>
+            <button
+              type="button"
+              role="tab"
+              aria-selected={activeTab === 'create'}
+              className="admin-tab"
+              onClick={() => setActiveTab('create')}
+            >
+              <Plus size={16} /> Emitir convites
+            </button>
+          </div>
 
-          <div className="flex gap-2 flex-wrap items-center ml-auto">
+          <div className="admin-actions-bar">
             <Button
               variant="outline"
               size="sm"
-              className="admin-tabs-action bg-emerald-50 text-emerald-800 border-emerald-300 hover:bg-emerald-100"
+              className="admin-action-btn bg-emerald-50 text-emerald-800 border-emerald-300 hover:bg-emerald-100"
               onClick={() => {
                 setBatchIndex(0);
                 setBatchModalOpen(true);
@@ -767,38 +770,46 @@ function AdminPanelPage() {
               title="Disparo guiado para WhatsApp de forma semi-automática e rápida"
             >
               <Play size={14} className="text-emerald-700" />
-              <span className="font-semibold">Fila Rápida WhatsApp</span> ({sentTokens.length}/{batchGuests.length})
+              <span className="font-semibold">Fila WhatsApp</span> ({sentTokens.length}/{batchGuests.length})
             </Button>
 
             <Button
               variant="outline"
               size="sm"
-              className="admin-tabs-action"
+              className="admin-action-btn"
               onClick={downloadBulkWhatsappCsv}
               disabled={batchGuests.length === 0}
               title="Descarregar ficheiro compatível com ferramentas automáticas de envio em massa"
             >
-              <FileSpreadsheet size={14} /> CSV p/ Disparador WhatsApp
+              <FileSpreadsheet size={14} /> CSV Disparador
             </Button>
 
-            <Button variant="outline" size="sm" className="admin-tabs-action" onClick={downloadCsv} disabled={guests.length === 0}>
-              <Download size={14} /> <span className="admin-hide-sm">Exportar</span> CSV Geral
+            <Button
+              variant="outline"
+              size="sm"
+              className="admin-action-btn"
+              onClick={downloadCsv}
+              disabled={guests.length === 0}
+            >
+              <Download size={14} /> CSV Geral
             </Button>
           </div>
         </div>
 
         {/* CONTROLO VISUAL DA MÁSCARA DO DOMÍNIO */}
-        <div className="flex items-center justify-between text-xs bg-muted/40 px-3.5 py-2 rounded-md border border-border my-3 flex-wrap gap-2">
-          <div className="flex items-center gap-2">
-            <Globe size={14} className="text-primary" />
-            <span>Domínio nos Links & QR Codes:</span>
-            <strong className="text-primary">{useMaskedDomain ? publicDomain : (typeof window !== 'undefined' ? window.location.origin : publicDomain)}</strong>
-            {useMaskedDomain && <span className="text-[11px] text-green-700 font-medium bg-green-100 px-1.5 py-0.5 rounded">Máscara Ativa</span>}
+        <div className="admin-domain-bar">
+          <div className="admin-domain-info">
+            <Globe size={14} className="text-primary shrink-0" />
+            <span className="shrink-0">Domínio nos Links & QR:</span>
+            <strong className="text-primary admin-domain-text">
+              {useMaskedDomain ? publicDomain : (typeof window !== 'undefined' ? window.location.origin : publicDomain)}
+            </strong>
+            {useMaskedDomain && <span className="text-[11px] text-green-700 font-medium bg-green-100 px-1.5 py-0.5 rounded shrink-0">Máscara Ativa</span>}
           </div>
           <button
             type="button"
             onClick={() => setUseMaskedDomain(v => !v)}
-            className="text-xs text-primary underline hover:opacity-80 cursor-pointer"
+            className="text-xs text-primary underline hover:opacity-80 cursor-pointer text-left"
           >
             {useMaskedDomain ? 'Usar link direto Cloudflare' : 'Usar link mascarado (nossocasamento.gt.tc)'}
           </button>

@@ -35,7 +35,6 @@ import coupleImg from '@/assets/couple.jpg';
 import {
   countdownToWedding,
   decemberDays,
-  invitationTokenSchema,
   receptionUrl,
   churchUrl,
   weddingPhones,
@@ -44,7 +43,7 @@ import {
   weddingGifts,
 } from '@/lib/wedding';
 import { RsvpForm } from './rsvp-form';
-import { lookupInvitation, confirmPersonalRsvp } from '@/lib/invitations.functions';
+import { confirmPersonalRsvp } from '@/lib/invitations.functions';
 
 function addToCalendar() {
   const ics = [
@@ -88,9 +87,6 @@ export function WeddingInvitation({
   const [opened, setOpened] = useState(false);
   const [countdown, setCountdown] = useState<number[] | null>(null);
   const [showRsvp, setShowRsvp] = useState(false);
-  const [code, setCode] = useState('');
-  const [error, setError] = useState('');
-  const [busy, setBusy] = useState(false);
   const [inviteUrl, setInviteUrl] = useState('');
   const [copied, setCopied] = useState('');
 
@@ -102,7 +98,6 @@ export function WeddingInvitation({
   const [rsvpFeedback, setRsvpFeedback] = useState('');
 
   const isPair = !!guestName && /\s(&|e)\s/i.test(guestName);
-  const lookup = useServerFn(lookupInvitation);
   const confirmPersonalFn = useServerFn(confirmPersonalRsvp);
   const navigate = useNavigate();
 
@@ -137,38 +132,6 @@ export function WeddingInvitation({
       setPartySize(initialPartySize);
     }
   }, [initialAttending, initialPartySize]);
-
-  async function consult(e: React.FormEvent) {
-    e.preventDefault();
-    setError('');
-    let value = code.trim();
-    if (value.startsWith('https://') || value.startsWith('http://')) {
-      try {
-        value = new URL(value).pathname.split('/').pop() ?? '';
-      } catch {
-        setError('Link inválido.');
-        return;
-      }
-    }
-    const result = invitationTokenSchema.safeParse(value);
-    if (!result.success) {
-      setError('Introduz o código completo ou o link que recebeste.');
-      return;
-    }
-    setBusy(true);
-    try {
-      const guest = await lookup({ data: result.data });
-      if (!guest) {
-        setError('Convite não encontrado ou desativado. Contacta os noivos.');
-        return;
-      }
-      await navigate({ to: '/convite/$token', params: { token: result.data } });
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Não foi possível consultar o convite.');
-    } finally {
-      setBusy(false);
-    }
-  }
 
   async function handlePersonalRsvpSubmit(attendingChoice: boolean) {
     if (!token) return;
@@ -685,26 +648,6 @@ export function WeddingInvitation({
               </Button>
 
               {showRsvp && <RsvpForm defaultName="" />}
-
-              <div className="guest-pass">
-                <QrCode size={22} />
-                <p className="body-copy">Já recebeste o teu convite pessoal ou tens um link?</p>
-                <form className="lookup-form" onSubmit={consult}>
-                  <input
-                    className="lookup-input"
-                    aria-label="Código ou link do convite"
-                    placeholder="Cola aqui o teu link ou código de 64 caracteres"
-                    value={code}
-                    maxLength={500}
-                    onChange={e => setCode(e.target.value)}
-                  />
-                  <Button className="wedding-cta" type="submit" disabled={busy}>
-                    {busy && <LoaderCircle className="animate-spin" />}
-                    Consultar convite
-                  </Button>
-                </form>
-                {error && <p role="alert" className="error-copy">{error}</p>}
-              </div>
             </>
           )}
         </section>

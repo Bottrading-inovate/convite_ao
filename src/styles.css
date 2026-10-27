@@ -755,6 +755,10 @@ html { scroll-behavior: smooth; scroll-padding-top: 80px; }
   background: var(--background);
   display: flex;
   flex-direction: column;
+  width: 100%;
+  max-width: 100vw;
+  overflow-x: hidden;
+  box-sizing: border-box;
 }
 
 .admin-topbar {
@@ -769,6 +773,8 @@ html { scroll-behavior: smooth; scroll-padding-top: 80px; }
   position: sticky;
   top: 0;
   z-index: 20;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .admin-monogram {
@@ -816,6 +822,7 @@ html { scroll-behavior: smooth; scroll-padding-top: 80px; }
   display: flex;
   flex-direction: column;
   gap: 24px;
+  box-sizing: border-box;
 }
 
 .admin-notice {
@@ -994,13 +1001,30 @@ html { scroll-behavior: smooth; scroll-padding-top: 80px; }
   text-align: right;
 }
 
-/* Abas */
+/* Seção de Abas e Ações Rápidas */
+.admin-tabs-section {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+@media (min-width: 901px) {
+  .admin-tabs-section {
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    border-bottom: 1px solid var(--border);
+    padding-bottom: 12px;
+  }
+}
+
 .admin-tabs {
   display: flex;
   align-items: center;
   gap: 8px;
-  border-bottom: 1px solid var(--border);
-  padding-bottom: 12px;
+  flex-wrap: wrap;
 }
 
 .admin-tab {
@@ -1016,6 +1040,7 @@ html { scroll-behavior: smooth; scroll-padding-top: 80px; }
   border-radius: 4px;
   cursor: pointer;
   transition: all .2s;
+  user-select: none;
 }
 
 .admin-tab:hover {
@@ -1035,8 +1060,44 @@ html { scroll-behavior: smooth; scroll-padding-top: 80px; }
   background: color-mix(in oklch, var(--paper) 25%, transparent);
 }
 
-.admin-tabs-action {
-  margin-left: auto;
+.admin-actions-bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.admin-action-btn {
+  font-size: 12px;
+  gap: 6px;
+}
+
+/* Barra do Domínio */
+.admin-domain-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 12px;
+  background: color-mix(in oklch, var(--sage) 12%, var(--paper));
+  padding: 10px 14px;
+  border-radius: 6px;
+  border: 1px solid var(--border);
+  gap: 10px;
+  flex-wrap: wrap;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.admin-domain-info {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  min-width: 0;
+}
+
+.admin-domain-text {
+  word-break: break-all;
 }
 
 /* Painel de Conteúdo */
@@ -1373,26 +1434,205 @@ html { scroll-behavior: smooth; scroll-padding-top: 80px; }
 
 @media (max-width: 640px) {
   .admin-topbar {
-    height: 64px;
-    padding: 0 16px;
+    height: 60px;
+    padding: 0 12px;
+    gap: 8px;
+  }
+  .admin-monogram {
+    font-size: 22px;
+  }
+  .admin-topbar-title h1 {
+    font-size: 14px;
+  }
+  .admin-topbar-title p {
+    font-size: 10px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 160px;
+  }
+  .admin-topbar-actions {
+    gap: 4px;
   }
   .admin-hide-sm {
     display: none;
   }
-  .admin-summary-cells {
-    grid-template-columns: 1fr;
+
+  .admin-main {
+    padding: 14px 10px 48px;
+    gap: 16px;
   }
-  .admin-guest-actions {
+  .admin-panel {
+    padding: 16px 12px;
+    border-radius: 8px;
+  }
+
+  /* Métricas em grid 2x2 harmonioso */
+  .admin-summary {
+    padding: 14px 12px;
+    gap: 12px;
+    border-radius: 8px;
+  }
+  .admin-summary-cells {
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+  }
+  .admin-summary-cell {
+    padding: 10px 8px;
+    border-radius: 6px;
+    gap: 2px;
+  }
+  .admin-summary-label {
+    font-size: 9px;
+    letter-spacing: 0.5px;
+    gap: 4px;
+  }
+  .admin-summary-value {
+    font-size: 24px;
+    line-height: 1.1;
+  }
+  .admin-summary-sub {
+    font-size: 10px;
+    line-height: 1.2;
+  }
+
+  /* Abas compactas em grade no mobile */
+  .admin-tabs {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
     width: 100%;
-    justify-content: flex-start;
+    gap: 4px;
+    background: var(--background);
+    padding: 4px;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    box-sizing: border-box;
+  }
+  .admin-tab {
+    padding: 8px 4px;
+    font-size: 11px;
+    justify-content: center;
+    border-radius: 6px;
+    gap: 4px;
+    min-width: 0;
+  }
+  .admin-tab svg {
+    width: 14px;
+    height: 14px;
+    flex-shrink: 0;
+  }
+  .admin-tab-count {
+    padding: 1px 5px;
+    font-size: 9px;
+  }
+
+  /* Barra de ações rápida (WhatsApp e CSVs) */
+  .admin-actions-bar {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    width: 100%;
+    gap: 8px;
+    box-sizing: border-box;
+  }
+  .admin-actions-bar .admin-action-btn:first-child {
+    grid-column: 1 / -1;
+    height: 42px;
+    font-size: 13px;
+    box-shadow: 0 1px 3px rgba(16, 185, 129, 0.2);
+  }
+  .admin-action-btn {
+    width: 100%;
+    justify-content: center;
+    height: 38px;
+    font-size: 11px;
+    padding: 0 8px;
+    box-sizing: border-box;
+  }
+
+  /* Barra de domínio mascarado */
+  .admin-domain-bar {
+    flex-direction: column;
+    align-items: flex-start;
+    padding: 10px 12px;
+    gap: 8px;
+  }
+  .admin-domain-info {
+    font-size: 11px;
+  }
+
+  /* Filtro e pesquisa */
+  .admin-filter-bar {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 10px;
+  }
+  .admin-search {
+    min-width: 0;
+    width: 100%;
+    padding: 8px 10px;
+    box-sizing: border-box;
   }
   .admin-segmented {
     width: 100%;
-    overflow-x: auto;
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    box-sizing: border-box;
   }
   .admin-segmented button {
-    flex: 1;
+    padding: 8px 2px;
+    font-size: 10px;
     justify-content: center;
+    flex-direction: column;
+    gap: 2px;
+  }
+  .admin-segmented button span {
+    font-size: 9px;
+    padding: 0 4px;
+  }
+
+  /* Linha do convidado */
+  .admin-guest-row {
+    flex-direction: column;
+    align-items: stretch;
+    padding: 14px 12px;
+    gap: 12px;
+    box-sizing: border-box;
+  }
+  .admin-guest-info {
+    min-width: 0;
+    width: 100%;
+  }
+  .admin-guest-name {
+    font-size: 16px;
+    word-break: break-word;
+  }
+  .admin-guest-actions {
+    width: 100%;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    justify-content: flex-start;
+    align-items: center;
+    border-top: 1px dashed var(--border);
+    padding-top: 10px;
+  }
+  .admin-whatsapp {
+    flex: 1 1 auto;
+    min-width: 90px;
+    height: 36px;
+    justify-content: center;
+    font-size: 12px;
+  }
+  .admin-status-select {
+    flex: 1 1 auto;
+    min-width: 90px;
+    height: 36px;
+    font-size: 12px;
+  }
+
+  /* Grade de mesas */
+  .admin-tables-grid {
+    grid-template-columns: 1fr;
   }
 }
 
