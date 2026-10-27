@@ -13,7 +13,8 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "invites:generate": "tsx scripts/generate-invitations.ts",
-    "invites:whatsapp": "tsx scripts/send-whatsapp-batch.ts"
+    "invites:whatsapp": "tsx scripts/send-whatsapp-batch.ts",
+    "deploy": "vite build && wrangler deploy"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.2.2",
