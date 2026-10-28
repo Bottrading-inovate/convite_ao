@@ -11,6 +11,7 @@ export const weddingGuests = pgTable("wedding_guests", {
   partySize: integer("party_size").notNull().default(1),
   message: text("message"),
   respondedAt: timestamp("responded_at", { withTimezone: true }),
+  checkedInAt: timestamp("checked_in_at", { withTimezone: true }),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 });
 

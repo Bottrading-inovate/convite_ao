@@ -1,6 +1,8 @@
-import { createFileRoute, Link } from '@tanstack/react-router';
+import { useState } from 'react';
+import { createFileRoute, Link, useRouter } from '@tanstack/react-router';
 import { queryOptions, useSuspenseQuery } from '@tanstack/react-query';
-import { lookupInvitation } from '@/lib/invitations.functions';
+import { useServerFn } from '@tanstack/react-start';
+import { lookupInvitation, checkInGuest } from '@/lib/invitations.functions';
 import { invitationTokenSchema } from '@/lib/wedding';
 import {
   CheckCircle2,
@@ -11,9 +13,12 @@ import {
   Calendar,
   UtensilsCrossed,
   Info,
-  ExternalLink,
   ShieldCheck,
   Sparkles,
+  AlertTriangle,
+  UserCheck,
+  LoaderCircle,
+  ShieldAlert,
 } from 'lucide-react';
 import botanicals from '@/assets/wedding-botanicals.png';
 import { Button } from '@/components/ui/button';
@@ -44,9 +49,52 @@ export const Route = createFileRoute('/passe/$token')({
   component: PassePortariaPage,
 });
 
+function formatDateTime(dtStr: string) {
+  try {
+    const d = new Date(dtStr);
+    return d.toLocaleTimeString('pt-AO', { hour: '2-digit', minute: '2-digit' }) + ' (' + d.toLocaleDateString('pt-AO') + ')';
+  } catch {
+    return dtStr;
+  }
+}
+
 function PassePortariaPage() {
   const { token } = Route.useParams();
   const { data } = useSuspenseQuery(invitationQuery(token));
+  const checkInFn = useServerFn(checkInGuest);
+  const router = useRouter();
+
+  const [checkingIn, setCheckingIn] = useState(false);
+  const [localCheckIn, setLocalCheckIn] = useState<{
+    checkedInAt: string;
+    alreadyCheckedIn: boolean;
+  } | null>(null);
+  const [errorMessage, setErrorMessage] = useState('');
+
+  const effectiveCheckedInAt = localCheckIn?.checkedInAt ?? data?.checkedInAt ?? null;
+  const isAlreadyUsed = !!effectiveCheckedInAt && (data?.checkedInAt != null || localCheckIn?.alreadyCheckedIn);
+  const isJustCompleted = !!effectiveCheckInSuccess();
+
+  function effectiveCheckInSuccess() {
+    return localCheckIn && !localCheckIn.alreadyCheckedIn;
+  }
+
+  async function handleCheckIn() {
+    setCheckingIn(true);
+    setErrorMessage('');
+    try {
+      const res = await checkInFn({ data: { token } });
+      setLocalCheckIn({
+        checkedInAt: res.checkedInAt,
+        alreadyCheckedIn: res.alreadyCheckedIn,
+      });
+      router.invalidate();
+    } catch (err) {
+      setErrorMessage(err instanceof Error ? err.message : 'Erro ao registar entrada na portaria.');
+    } finally {
+      setCheckingIn(false);
+    }
+  }
 
   return (
     <div className="passe-page-wrapper">
@@ -83,42 +131,70 @@ function PassePortariaPage() {
           </div>
         ) : (
           <article className="passe-card">
-            {/* Status da Portaria */}
-            <div
-              className={`passe-status-badge ${
-                data.attending === true
-                  ? 'status-confirmed'
-                  : data.attending === false
-                    ? 'status-declined'
-                    : 'status-pending'
-              }`}
-            >
-              {data.attending === true ? (
-                <>
-                  <CheckCircle2 size={24} className="status-icon text-green-700" />
-                  <div>
-                    <strong className="status-label text-green-900">ENTRADA AUTORIZADA</strong>
-                    <p className="status-desc text-green-800">Presença confirmada no sistema</p>
-                  </div>
-                </>
-              ) : data.attending === false ? (
-                <>
-                  <XCircle size={24} className="status-icon text-destructive" />
-                  <div>
-                    <strong className="status-label text-destructive">PRESENÇA RECUSADA</strong>
-                    <p className="status-desc text-muted-foreground">O convidado assinalou que não comparece</p>
-                  </div>
-                </>
-              ) : (
-                <>
-                  <Clock size={24} className="status-icon text-amber-600" />
-                  <div>
-                    <strong className="status-label text-amber-800">RESPOSTA PENDENTE</strong>
-                    <p className="status-desc text-amber-700">Ainda não respondeu à confirmação no site</p>
-                  </div>
-                </>
-              )}
-            </div>
+            {/* Status da Portaria com Detecção de Reuso */}
+            {isAlreadyUsed ? (
+              <div className="passe-status-badge status-already-used" role="alert">
+                <ShieldAlert size={28} className="status-icon text-red-600 shrink-0" />
+                <div>
+                  <strong className="status-label text-red-950 font-bold tracking-normal">
+                    ⚠️ ATENÇÃO: CONVITE JÁ UTILIZADO!
+                  </strong>
+                  <p className="status-desc text-red-900 mt-1">
+                    Entrada já registada às <strong>{formatDateTime(effectiveCheckedInAt!)}</strong>.
+                    <br />
+                    <span className="font-semibold underline">Entrada duplicada recusada.</span> Encaminha a pessoa à coordenação.
+                  </p>
+                </div>
+              </div>
+            ) : isJustCompleted ? (
+              <div className="passe-status-badge status-checkin-success">
+                <CheckCircle2 size={26} className="status-icon text-emerald-800 shrink-0" />
+                <div>
+                  <strong className="status-label text-emerald-950 font-bold">
+                    ENTRADA VALIDADA COM SUCESSO!
+                  </strong>
+                  <p className="status-desc text-emerald-800">
+                    Check-in carimbado às {formatDateTime(effectiveCheckedInAt!)}. Bem-vindo(a) à festa!
+                  </p>
+                </div>
+              </div>
+            ) : (
+              <div
+                className={`passe-status-badge ${
+                  data.attending === true
+                    ? 'status-confirmed'
+                    : data.attending === false
+                      ? 'status-declined'
+                      : 'status-pending'
+                }`}
+              >
+                {data.attending === true ? (
+                  <>
+                    <CheckCircle2 size={24} className="status-icon text-green-700" />
+                    <div>
+                      <strong className="status-label text-green-900">ENTRADA AUTORIZADA</strong>
+                      <p className="status-desc text-green-800">Presença confirmada no sistema</p>
+                    </div>
+                  </>
+                ) : data.attending === false ? (
+                  <>
+                    <XCircle size={24} className="status-icon text-destructive" />
+                    <div>
+                      <strong className="status-label text-destructive">PRESENÇA RECUSADA</strong>
+                      <p className="status-desc text-muted-foreground">O convidado assinalou que não comparece</p>
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    <Clock size={24} className="status-icon text-amber-600" />
+                    <div>
+                      <strong className="status-label text-amber-800">RESPOSTA PENDENTE</strong>
+                      <p className="status-desc text-amber-700">Ainda não respondeu à confirmação no site</p>
+                    </div>
+                  </>
+                )}
+              </div>
+            )}
 
             {/* Nome do Convidado em Grande Destaque */}
             <section className="passe-section passe-guest-highlight">
@@ -155,6 +231,36 @@ function PassePortariaPage() {
                 </p>
               </div>
             </div>
+
+            {/* BOTÃO DE CARIMBAR ENTRADA NA PORTARIA (APENAS SE NÃO FOI USADO AINDA E SE FOR CONFIRMADO) */}
+            {!effectiveCheckedInAt && data.attending === true && (
+              <div className="passe-checkin-box">
+                <Button
+                  type="button"
+                  className="wedding-cta w-full h-12 text-base font-semibold bg-emerald-700 hover:bg-emerald-800 text-white shadow-md gap-2 cursor-pointer"
+                  onClick={handleCheckIn}
+                  disabled={checkingIn}
+                >
+                  {checkingIn ? (
+                    <>
+                      <LoaderCircle size={18} className="animate-spin" />
+                      <span>A validar entrada...</span>
+                    </>
+                  ) : (
+                    <>
+                      <UserCheck size={18} />
+                      <span>Validar Entrada na Portaria</span>
+                    </>
+                  )}
+                </Button>
+                <p>
+                  Toca para carimbar a entrada. Uma vez validado, este QR Code fica bloqueado contra reuso por terceiros.
+                </p>
+                {errorMessage && (
+                  <p className="text-xs text-destructive font-medium mt-1">{errorMessage}</p>
+                )}
+              </div>
+            )}
 
             {/* Aviso de Crianças */}
             <div className="passe-notice">

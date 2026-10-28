@@ -1748,6 +1748,67 @@ html { scroll-behavior: smooth; scroll-padding-top: 80px; }
   border-color: oklch(0.88 0.08 85);
 }
 
+.passe-status-badge.status-already-used {
+  background-color: #fff1f2;
+  border-color: #f43f5e;
+  box-shadow: 0 4px 16px rgba(225, 29, 72, 0.15);
+}
+
+.passe-status-badge.status-already-used .status-label {
+  color: #9f1239;
+}
+
+.passe-status-badge.status-already-used .status-desc {
+  color: #be123c;
+  font-size: 13px;
+  line-height: 1.4;
+}
+
+.passe-status-badge.status-checkin-success {
+  background-color: #f0fdf4;
+  border-color: #22c55e;
+  box-shadow: 0 4px 16px rgba(34, 197, 94, 0.15);
+}
+
+.passe-status-badge.status-checkin-success .status-label {
+  color: #14532d;
+}
+
+.passe-status-badge.status-checkin-success .status-desc {
+  color: #166534;
+}
+
+.passe-checkin-box {
+  background: color-mix(in oklch, var(--sage) 15%, var(--paper));
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 16px;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.passe-checkin-box p {
+  font-size: 12px;
+  color: var(--muted-foreground);
+  margin: 0;
+  line-height: 1.4;
+}
+
+.admin-chip-checked {
+  background: #ecfdf5;
+  color: #047857;
+  border: 1px solid #a7f3d0;
+  font-size: 11px;
+  padding: 2px 7px;
+  border-radius: 4px;
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
 .status-label {
   display: block;
   font-size: 14px;

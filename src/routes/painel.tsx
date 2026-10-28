@@ -12,6 +12,7 @@ import {
   adminDeleteGuest,
   adminUpdateGuest,
   adminSetGuestTable,
+  adminToggleCheckin,
   type GuestRow,
   type DashboardStats,
 } from '@/lib/invitations.functions';
@@ -45,6 +46,7 @@ import {
   CheckCheck,
   Play,
   FileSpreadsheet,
+  UserCheck,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
@@ -217,6 +219,7 @@ function AdminPanelPage() {
   const deleteGuestFn = useServerFn(adminDeleteGuest);
   const updateGuestFn = useServerFn(adminUpdateGuest);
   const setTableFn = useServerFn(adminSetGuestTable);
+  const toggleCheckinFn = useServerFn(adminToggleCheckin);
 
   useEffect(() => {
     // Remove o PIN antigo guardado em versões anteriores.
@@ -412,6 +415,30 @@ function AdminPanelPage() {
       setNotice(`Mesa de ${guest.name} definida como "${val || 'Sem mesa'}".`);
     } catch (err) {
       guardSession(err, 'Não foi possível atribuir a mesa.');
+    }
+  }
+
+  async function handleToggleCheckin(guest: GuestRow) {
+    const nextState = !guest.checkedInAt;
+    try {
+      await toggleCheckinFn({
+        data: {
+          session,
+          token: guest.token,
+          checkedIn: nextState,
+        },
+      });
+      const now = new Date().toISOString();
+      setGuests(prev =>
+        prev.map(g => (g.id === guest.id ? { ...g, checkedInAt: nextState ? now : null } : g)),
+      );
+      setNotice(
+        nextState
+          ? `Entrada de ${guest.name} registada com sucesso!`
+          : `Registo de entrada de ${guest.name} desmarcado.`,
+      );
+    } catch (err) {
+      guardSession(err, 'Não foi possível atualizar o registo de entrada.');
     }
   }
 
@@ -717,9 +744,14 @@ function AdminPanelPage() {
                   <span className="seg-confirmed" style={{ width: pct(stats.confirmedInvites) }} />
                   <span className="seg-declined" style={{ width: pct(stats.declinedInvites) }} />
                 </div>
-                <p className="admin-progress-label">
-                  {responded} de {stats.totalInvites} convidados já responderam
-                </p>
+                <div className="flex justify-between items-center text-[11px] text-muted-foreground mt-1 flex-wrap gap-1">
+                  <span>{responded} de {stats.totalInvites} convidados já responderam</span>
+                  {stats.checkedInInvites > 0 && (
+                    <span className="text-emerald-800 font-semibold flex items-center gap-1 bg-emerald-100/70 px-2 py-0.5 rounded border border-emerald-300">
+                      <UserCheck size={12} /> {stats.checkedInGuests} {stats.checkedInGuests === 1 ? 'pessoa presente' : 'pessoas presentes'} ({stats.checkedInInvites} {stats.checkedInInvites === 1 ? 'entrada validada' : 'entradas validadas'})
+                    </span>
+                  )}
+                </div>
               </div>
             )}
           </section>
@@ -894,6 +926,15 @@ function AdminPanelPage() {
                             <CheckCheck size={12} /> Enviado
                           </span>
                         )}
+                        {g.checkedInAt && (
+                          <span
+                            className="admin-chip-checked cursor-pointer"
+                            title={`Entrada registada às ${new Date(g.checkedInAt).toLocaleTimeString('pt-AO', { hour: '2-digit', minute: '2-digit' })}. Clica para alterar.`}
+                            onClick={() => handleToggleCheckin(g)}
+                          >
+                            <UserCheck size={11} /> Entrou ({new Date(g.checkedInAt).toLocaleTimeString('pt-AO', { hour: '2-digit', minute: '2-digit' })})
+                          </span>
+                        )}
                       </div>
                       <div className="admin-guest-meta">
                         <span className={g.phone ? '' : 'is-muted'}>
@@ -905,6 +946,17 @@ function AdminPanelPage() {
                     </div>
 
                     <div className="admin-guest-actions">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleToggleCheckin(g)}
+                        className={`h-8 text-xs gap-1.5 ${g.checkedInAt ? 'bg-emerald-50 text-emerald-800 border-emerald-300 hover:bg-emerald-100' : ''}`}
+                        title={g.checkedInAt ? 'Entrada já registada. Clica para anular se necessário.' : 'Registar entrada na portaria'}
+                      >
+                        <UserCheck size={13} className={g.checkedInAt ? 'text-emerald-700' : 'text-primary'} />
+                        <span className="admin-hide-sm">{g.checkedInAt ? 'Entrou' : 'Dar Entrada'}</span>
+                      </Button>
+
                       <Button
                         variant="outline"
                         size="sm"

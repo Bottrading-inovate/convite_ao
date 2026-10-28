@@ -61,6 +61,7 @@ export interface GuestDetails {
   partySize?: number;
   respondedAt?: string | null;
   tableName?: string | null;
+  checkedInAt?: string | null;
 }
 
 export const lookupInvitation = createServerFn({ method: 'POST' })
@@ -75,6 +76,7 @@ export const lookupInvitation = createServerFn({ method: 'POST' })
       party_size: number;
       responded_at: string | null;
       table_name?: string | null;
+      checked_in_at?: string | null;
     }> | null)?.[0];
     return guest
       ? {
@@ -83,8 +85,39 @@ export const lookupInvitation = createServerFn({ method: 'POST' })
           partySize: guest.party_size ?? 1,
           respondedAt: guest.responded_at ?? null,
           tableName: guest.table_name ?? null,
+          checkedInAt: guest.checked_in_at ?? null,
         }
       : null;
+  });
+
+export interface CheckInResult {
+  success: boolean;
+  alreadyCheckedIn: boolean;
+  checkedInAt: string;
+  guestName: string;
+}
+
+export const checkInGuest = createServerFn({ method: 'POST' })
+  .validator((data: unknown) => z.object({ token: invitationTokenSchema }).parse(data))
+  .handler(async ({ data: { token } }): Promise<CheckInResult> => {
+    noStore();
+    const { data, error } = await getSupabaseServerClient().rpc('check_in_wedding_guest', {
+      invitation_token: token,
+    });
+    if (error) throw dbError(error, 'Não foi possível registar o check-in na portaria.');
+    const row = (data as Array<{
+      success: boolean;
+      already_checked_in: boolean;
+      checked_in_at: string;
+      guest_name: string;
+    }> | null)?.[0];
+    if (!row) throw new Error('Falha ao processar o check-in na portaria.');
+    return {
+      success: row.success,
+      alreadyCheckedIn: row.already_checked_in,
+      checkedInAt: row.checked_in_at,
+      guestName: row.guest_name,
+    };
   });
 
 export const rsvpSchema = z.object({
@@ -159,6 +192,7 @@ export interface GuestRow {
   respondedAt: string | null;
   active: boolean;
   tableName?: string | null;
+  checkedInAt?: string | null;
 }
 
 export interface DashboardStats {
@@ -169,6 +203,8 @@ export interface DashboardStats {
   declinedInvites: number;
   pendingInvites: number;
   pendingGuests: number;
+  checkedInInvites: number;
+  checkedInGuests: number;
 }
 
 type AuthResult = { session_token: string | null; error: string | null };
@@ -242,7 +278,7 @@ export const adminGetDashboard = createServerFn({ method: 'POST' })
     type Raw = {
       id: string; name: string; phone: string | null; token: string; party_size: number | null;
       attending: boolean | null; message: string | null; created_at: string; responded_at: string | null; active: boolean | null;
-      table_name?: string | null;
+      table_name?: string | null; checked_in_at?: string | null;
     };
     const guests: GuestRow[] = ((rows as Raw[] | null) ?? []).map(r => ({
       id: r.id,
@@ -256,6 +292,7 @@ export const adminGetDashboard = createServerFn({ method: 'POST' })
       respondedAt: r.responded_at,
       active: r.active ?? true,
       tableName: r.table_name ?? null,
+      checkedInAt: r.checked_in_at ?? null,
     }));
 
     const stats: DashboardStats = {
@@ -266,12 +303,19 @@ export const adminGetDashboard = createServerFn({ method: 'POST' })
       declinedInvites: 0,
       pendingInvites: 0,
       pendingGuests: 0,
+      checkedInInvites: 0,
+      checkedInGuests: 0,
     };
     for (const g of guests) {
       stats.totalGuestsTarget += g.partySize;
       if (g.attending === true) { stats.confirmedInvites++; stats.confirmedGuests += g.partySize; }
       else if (g.attending === false) stats.declinedInvites++;
       else { stats.pendingInvites++; stats.pendingGuests += g.partySize; }
+
+      if (g.checkedInAt) {
+        stats.checkedInInvites++;
+        stats.checkedInGuests += g.partySize;
+      }
     }
     return { stats, guests };
   });
@@ -358,6 +402,25 @@ export const adminSetGuestTable = createServerFn({ method: 'POST' })
       p_table_name: data.tableName || null,
     });
     if (error) throw dbError(error, 'Não foi possível atribuir a mesa ao convidado.');
+    return { success: true };
+  });
+
+export const adminToggleCheckin = createServerFn({ method: 'POST' })
+  .validator((data: unknown) =>
+    z.object({
+      session: sessionSchema,
+      token: invitationTokenSchema,
+      checkedIn: z.boolean(),
+    }).parse(data),
+  )
+  .handler(async ({ data }) => {
+    noStore();
+    const { error } = await getSupabaseServerClient().rpc('admin_toggle_checkin', {
+      p_session: data.session,
+      p_token: data.token,
+      p_checked_in: data.checkedIn,
+    });
+    if (error) throw dbError(error, 'Não foi possível atualizar o registo de entrada.');
     return { success: true };
   });
 
